@@ -66,6 +66,21 @@ colnames(Moss_rates) <- c("Genus", "Rate_complete", "Rate_separate")
 Moss_rates$Rate_complete<- abs(Moss_rates$Rate_complete)
 Moss_rates$Rate_separate<- abs(Moss_rates$Rate_separate)
 
+#### Calculate the differences between initial and end wetness ####
+diff_times_immediate <- c(0, 30)
+
+Filter_complete_i <- Moss_complete %>%
+  filter(Time %in% rate_times)
+Filter_separate_i <- Moss_separate %>%
+  filter(Time %in% rate_times)
+
+diff_times_final <- c(30, 660)
+
+Filter_complete_f <- Moss_complete %>%
+  filter(Time %in% rate_times)
+Filter_separate_f <- Moss_separate %>%
+  filter(Time %in% rate_times)
+
 #### Calculate modes of evolution ####
 
 MossRC_label<-as.numeric(Moss_rates$Rate_complete[match(Moss_tree$tip.label,Moss_rates$Genus)])
