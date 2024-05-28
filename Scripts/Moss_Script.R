@@ -37,7 +37,11 @@ Moss_tree$tip.label <- sub("_.*", "", Moss_tree$tip.label)
 #Convert to ultrametric tree
 Moss_tree<- chronos(Moss_tree)
 
+#Delete node.labels 
+Moss_tree$node.label <- NULL
+
 plot(Moss_tree)
+nodelabels()
 
 #### Calculating rates ID ####
 #We use the rates from min 30 to min 120 because 0-30min is water dropping
@@ -143,7 +147,7 @@ Moss_diff_s_Genus <- Moss_diff_s_ID %>%
 
 #### Make the complete dataframe for all values ####
 
-Moss_ID_data <- reduce(list(Moss_rates_ID, Moss_diff_c_ID, Moss_diff_s_ID), 
+Moss_ID_data <- reduce(list(Moss_data, Moss_rates_ID, Moss_diff_c_ID, Moss_diff_s_ID), 
                        left_join, by = c("ID", "Genus"))
 
 #### Calculate modes of evolution Genus ####
@@ -181,3 +185,17 @@ pchisq(OUvsEB_C, df=1,lower.tail = FALSE)
 
 #OU is better than both EB and BM. The values are restrained to ne value in the model
 #Use alpha when doing the phylogenetic approaches: 1387.735201
+
+#### MCMCglmm ####
+
+inv.mossphylo<-inverseA(Moss_tree,nodes="TIPS",scale=TRUE)
+
+p1 = list(B=list(mu=rep(0,2), V=diag(2)*1e+8), G=list(G1=list(V=1,nu=0.002)),
+          R=list(V=1,nu=0.002))
+
+m1<-MCMCglmm(Rate_complete ~ Substrate, random = ~Genus, 
+             ginverse=list(Genus=inv.mossphylo$Ainv), 
+             family ="poisson", data = Moss_ID_data, 
+             prior=p1, nitt=110000, burnin=10000, thin=100,verbose=F)
+summary(m1)
+
