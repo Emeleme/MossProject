@@ -5,4 +5,4 @@
 ##### Data manipulation #####
 
 ### Uploading data ###
-Moss_data<-read.table("Data/Moss_Data_Full.xlsx")
+Moss_data<-read.table("Data/Moss_Data_Full.xlsx") 
