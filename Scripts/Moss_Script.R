@@ -2,7 +2,7 @@
 ##### MOSS PROJECT SCRIPT #####
 ################################################################################
 
-usethis::use_github()
+#usethis::use_github()
 
 ##### Data manipulation #####
 pacman::p_load(openxlsx,tidyverse,RColorBrewer,ape,MCMCglmm,picante,geiger,
@@ -99,12 +99,12 @@ Filter_separate_i <- Moss_separate %>%
 Diff_complete_i <- Filter_complete_i %>%
   group_by(ID) %>%
   spread(Time, Weight) %>%  
-  mutate(Immediate_diff = `0` - `30`) 
+  mutate(Immediate_diff_complete = `0` - `30`) 
 
 Diff_separate_i <- Filter_separate_i %>%
   group_by(ID) %>%
   spread(Time, Weight) %>%  
-  mutate(Immediate_diff = `0` - `30`)
+  mutate(Immediate_diff_separated = `0` - `30`)
 
 diff_times_final <- c(30, 660)
 
@@ -116,18 +116,35 @@ Filter_separate_f <- Moss_separate %>%
 Diff_complete_f <- Filter_complete_f %>%
   group_by(ID) %>%
   spread(Time, Weight) %>%  
-  mutate(Final_diff = `30` - `660`) 
+  mutate(Final_diff_complete = `30` - `660`) 
 
 Diff_separate_f <- Filter_separate_f %>%
   group_by(ID) %>%
   spread(Time, Weight) %>%  
-  mutate(Final_diff = `30` - `660`)
+  mutate(Final_diff_separated = `30` - `660`)
 
 Moss_diff_c_ID <- merge(Diff_complete_i,Diff_complete_f, by=c("ID", "Genus"))
-Moss_diff_c_ID <- select(Moss_diff_c, -c("0","30.x","30.y","660"))
+Moss_diff_c_ID <- select(Moss_diff_c_ID, -c("0","30.x","30.y","660"))
 
 Moss_diff_s_ID <- merge(Diff_separate_i,Diff_separate_f, by=c("ID", "Genus"))
-Moss_diff_s_ID <- select(Moss_diff_s, -c("0","30.x","30.y","660"))
+Moss_diff_s_ID <- select(Moss_diff_s_ID, -c("0","30.x","30.y","660"))
+
+#### Calculate the differences between initial and end wetness _Genus ####
+
+Moss_diff_c_Genus <- Moss_diff_c_ID %>% 
+  group_by(Genus) %>% 
+  summarise(mean_imm_diff=mean(Immediate_diff_complete),
+            mean_final_diff=mean(Final_diff_complete))
+
+Moss_diff_s_Genus <- Moss_diff_s_ID %>% 
+  group_by(Genus) %>% 
+  summarise(mean_imm_diff=mean(Immediate_diff_separated),
+            mean_final_diff=mean(Final_diff_separated))
+
+#### Make the complete dataframe for all values ####
+
+Moss_ID_data <- reduce(list(Moss_rates_ID, Moss_diff_c_ID, Moss_diff_s_ID), 
+                       left_join, by = c("ID", "Genus"))
 
 #### Calculate modes of evolution Genus ####
 
