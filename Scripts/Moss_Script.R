@@ -39,7 +39,7 @@ Moss_tree<- chronos(Moss_tree)
 
 plot(Moss_tree)
 
-#### Calculating rates ####
+#### Calculating rates ID ####
 #We use the rates from min 30 to min 120 because 0-30min is water dropping
 rate_times <- c(30, 60, 90, 120)
 
@@ -48,48 +48,99 @@ Filter_complete <- Moss_complete %>%
 Filter_separate <- Moss_separate %>%
   filter(Time %in% rate_times)
   
-Moss_rates_complete <- Filter_complete %>%
-  group_by(Genus) %>%
+Moss_rates_complete_ID <- Filter_complete %>%
+  group_by(ID, Genus) %>%
   do(tidy(lm(Weight ~ Time, data = .))) %>%
   filter(term == "Time") %>%
   select(Genus, estimate)
   
-Moss_rates_separate <- Filter_separate %>%
+Moss_rates_separate_ID <- Filter_separate %>%
+  group_by(ID, Genus) %>%
+  do(tidy(lm(Weight ~ Time, data = .))) %>%
+  filter(term == "Time") %>%
+  select(Genus, estimate)
+
+Moss_rates_ID <- merge(Moss_rates_complete_ID, Moss_rates_separate_ID, 
+                       by=c("Genus", "ID"))
+colnames(Moss_rates_ID) <- c("Genus", "ID", "Rate_complete", "Rate_separate")
+
+Moss_rates_ID$Rate_complete<- abs(Moss_rates_ID$Rate_complete)
+Moss_rates_ID$Rate_separate<- abs(Moss_rates_ID$Rate_separate)
+
+#### Calculating rates _Genus ####
+#We use the rates from min 30 to min 120 because 0-30min is water dropping
+Moss_rates_complete_Genus <- Filter_complete %>%
   group_by(Genus) %>%
   do(tidy(lm(Weight ~ Time, data = .))) %>%
   filter(term == "Time") %>%
   select(Genus, estimate)
 
-Moss_rates <- merge(Moss_rates_complete, Moss_rates_separate, by="Genus")
-colnames(Moss_rates) <- c("Genus", "Rate_complete", "Rate_separate")
+Moss_rates_separate_Genus <- Filter_separate %>%
+  group_by(Genus) %>%
+  do(tidy(lm(Weight ~ Time, data = .))) %>%
+  filter(term == "Time") %>%
+  select(Genus, estimate)
 
-Moss_rates$Rate_complete<- abs(Moss_rates$Rate_complete)
-Moss_rates$Rate_separate<- abs(Moss_rates$Rate_separate)
+Moss_rates_Genus <- merge(Moss_rates_complete_Genus, Moss_rates_separate_Genus, 
+                       by="Genus")
+colnames(Moss_rates_Genus) <- c("Genus", "Rate_complete", "Rate_separate")
 
-#### Calculate the differences between initial and end wetness ####
+Moss_rates_Genus$Rate_complete<- abs(Moss_rates_Genus$Rate_complete)
+Moss_rates_Genus$Rate_separate<- abs(Moss_rates_Genus$Rate_separate)
+
+#### Calculate the differences between initial and end wetness ID ####
 diff_times_immediate <- c(0, 30)
 
 Filter_complete_i <- Moss_complete %>%
-  filter(Time %in% rate_times)
+  filter(Time %in% diff_times_immediate)
 Filter_separate_i <- Moss_separate %>%
-  filter(Time %in% rate_times)
+  filter(Time %in% diff_times_immediate)
+
+Diff_complete_i <- Filter_complete_i %>%
+  group_by(ID) %>%
+  spread(Time, Weight) %>%  
+  mutate(Immediate_diff = `0` - `30`) 
+
+Diff_separate_i <- Filter_separate_i %>%
+  group_by(ID) %>%
+  spread(Time, Weight) %>%  
+  mutate(Immediate_diff = `0` - `30`)
 
 diff_times_final <- c(30, 660)
 
 Filter_complete_f <- Moss_complete %>%
-  filter(Time %in% rate_times)
+  filter(Time %in% diff_times_final)
 Filter_separate_f <- Moss_separate %>%
-  filter(Time %in% rate_times)
+  filter(Time %in% diff_times_final)
 
-#### Calculate modes of evolution ####
+Diff_complete_f <- Filter_complete_f %>%
+  group_by(ID) %>%
+  spread(Time, Weight) %>%  
+  mutate(Final_diff = `30` - `660`) 
 
-MossRC_label<-as.numeric(Moss_rates$Rate_complete[match(Moss_tree$tip.label,Moss_rates$Genus)])
+Diff_separate_f <- Filter_separate_f %>%
+  group_by(ID) %>%
+  spread(Time, Weight) %>%  
+  mutate(Final_diff = `30` - `660`)
+
+Moss_diff_c_ID <- merge(Diff_complete_i,Diff_complete_f, by=c("ID", "Genus"))
+Moss_diff_c_ID <- select(Moss_diff_c, -c("0","30.x","30.y","660"))
+
+Moss_diff_s_ID <- merge(Diff_separate_i,Diff_separate_f, by=c("ID", "Genus"))
+Moss_diff_s_ID <- select(Moss_diff_s, -c("0","30.x","30.y","660"))
+
+#### Calculate modes of evolution Genus ####
+
+MossRC_label<-as.numeric(Moss_rates_Genus$Rate_complete[match(
+  Moss_tree$tip.label,Moss_rates_Genus$Genus)])
 names(MossRC_label)<-Moss_tree$tip.label
-MossSC_label<-as.numeric(Moss_rates$Rate_separate[match(Moss_tree$tip.label,Moss_rates$Genus)])
+MossSC_label<-as.numeric(Moss_rates_Genus$Rate_separate[match(
+  Moss_tree$tip.label,Moss_rates_Genus$Genus)])
 names(MossSC_label)<-Moss_tree$tip.label
 
 BM_C<-fitContinuous(phy= Moss_tree, dat = MossRC_label, model = "BM")
-OU_C<-fitContinuous(phy= Moss_tree, dat = MossRC_label, model = "OU", bounds=list(alpha=c(0,10000)))
+OU_C<-fitContinuous(phy= Moss_tree, dat = MossRC_label, model = "OU", 
+                    bounds=list(alpha=c(0,10000)))
 EB_C<-fitContinuous(phy= Moss_tree, dat = MossRC_label, model = "EB")
 
 BM_C$opt$aic
