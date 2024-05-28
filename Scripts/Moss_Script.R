@@ -188,14 +188,32 @@ pchisq(OUvsEB_C, df=1,lower.tail = FALSE)
 
 #### MCMCglmm ####
 
+Moss_ID_data$Rate_complete<-as.integer(Moss_ID_data$Rate_complete)
+
 inv.mossphylo<-inverseA(Moss_tree,nodes="TIPS",scale=TRUE)
 
-p1 = list(B=list(mu=rep(0,2), V=diag(2)*1e+8), G=list(G1=list(V=1,nu=0.002)),
+p1 = list(B=list(mu=rep(0,4), V=diag(4)*1e+8), G=list(G1=list(V=1,nu=0.002)),
           R=list(V=1,nu=0.002))
 
-m1<-MCMCglmm(Rate_complete ~ Substrate, random = ~Genus, 
+m1a<-MCMCglmm(Rate_complete ~ Substrate, random = ~Genus, 
              ginverse=list(Genus=inv.mossphylo$Ainv), 
              family ="poisson", data = Moss_ID_data, 
              prior=p1, nitt=110000, burnin=10000, thin=100,verbose=F)
-summary(m1)
+m1b<-MCMCglmm(Rate_complete ~ Substrate, random = ~Genus, 
+              ginverse=list(Genus=inv.mossphylo$Ainv), 
+              family ="poisson", data = Moss_ID_data, 
+              prior=p1, nitt=110000, burnin=10000, thin=100,verbose=F)
+m1c<-MCMCglmm(Rate_complete ~ Substrate, random = ~Genus, 
+              ginverse=list(Genus=inv.mossphylo$Ainv), 
+              family ="poisson", data = Moss_ID_data, 
+              prior=p1, nitt=110000, burnin=10000, thin=100,verbose=F)
+
+###Plot the fixed effects
+plot(mcmc.list(m1a$Sol,m1b$Sol,m1c$Sol))
+###And random effects
+plot(mcmc.list(m1a$Sol,m1b$Sol,m1c$Sol))
+
+gelman.diag(mcmc.list(m1a$Sol,m1b$Sol,m1c$Sol))
+
+summary(m1a)
 
