@@ -2,6 +2,8 @@
 ##### MOSS PROJECT SCRIPT #####
 ################################################################################
 
+usethis::use_github()
+
 ##### Data manipulation #####
 pacman::p_load(openxlsx,tidyverse,RColorBrewer,ape,MCMCglmm,picante,geiger,
                phytools,ggtree, treeio,ggimage, broom)
