@@ -6,7 +6,7 @@
 
 ##### Data manipulation #####
 pacman::p_load(openxlsx,tidyverse,RColorBrewer,ape,MCMCglmm,picante,geiger,
-               phytools,ggtree, treeio,ggimage, broom)
+               phytools,ggtree, treeio,ggimage, broom, ggally)
 
 
 #### Uploading data ####
@@ -186,34 +186,124 @@ pchisq(OUvsEB_C, df=1,lower.tail = FALSE)
 #OU is better than both EB and BM. The values are restrained to ne value in the model
 #Use alpha when doing the phylogenetic approaches: 1387.735201
 
-#### MCMCglmm ####
+#### MCMCglmm z - Rate complete ~ substrate ####
 
-Moss_ID_data$Rate_complete<-as.integer(Moss_ID_data$Rate_complete)
-
+Moss_ID_data$z_Rate_complete <- scale(Moss_ID_data$Rate_complete)
 inv.mossphylo<-inverseA(Moss_tree,nodes="TIPS",scale=TRUE)
 
 p1 = list(B=list(mu=rep(0,4), V=diag(4)*1e+8), G=list(G1=list(V=1,nu=0.002)),
           R=list(V=1,nu=0.002))
 
-m1a<-MCMCglmm(Rate_complete ~ Substrate, random = ~Genus, 
-             ginverse=list(Genus=inv.mossphylo$Ainv), 
-             family ="poisson", data = Moss_ID_data, 
+m1a<-MCMCglmm(z_Rate_complete ~ Substrate, random = ~Genus,
+             ginverse=list(Genus=inv.mossphylo$Ainv),
+             family ="gaussian", data = Moss_ID_data,
              prior=p1, nitt=110000, burnin=10000, thin=100,verbose=F)
-m1b<-MCMCglmm(Rate_complete ~ Substrate, random = ~Genus, 
-              ginverse=list(Genus=inv.mossphylo$Ainv), 
-              family ="poisson", data = Moss_ID_data, 
+m1b<-MCMCglmm(z_Rate_complete ~ Substrate, random = ~Genus,
+              ginverse=list(Genus=inv.mossphylo$Ainv),
+              family ="gaussian", data = Moss_ID_data,
               prior=p1, nitt=110000, burnin=10000, thin=100,verbose=F)
-m1c<-MCMCglmm(Rate_complete ~ Substrate, random = ~Genus, 
-              ginverse=list(Genus=inv.mossphylo$Ainv), 
-              family ="poisson", data = Moss_ID_data, 
+m1c<-MCMCglmm(z_Rate_complete ~ Substrate, random = ~Genus,
+              ginverse=list(Genus=inv.mossphylo$Ainv),
+              family ="gaussian", data = Moss_ID_data,
               prior=p1, nitt=110000, burnin=10000, thin=100,verbose=F)
 
-###Plot the fixed effects
+#Plot the fixed effects
 plot(mcmc.list(m1a$Sol,m1b$Sol,m1c$Sol))
-###And random effects
+#And random effects
 plot(mcmc.list(m1a$Sol,m1b$Sol,m1c$Sol))
 
 gelman.diag(mcmc.list(m1a$Sol,m1b$Sol,m1c$Sol))
 
 summary(m1a)
 
+boxplot(Moss_ID_data$z_Rate_complete~Moss_ID_data$Substrate)
+boxplot(Moss_ID_data$z_Rate_separate~Moss_ID_data$Substrate)
+#### MCMCglmm z - Rate separate ~ substrate  ####
+
+Moss_ID_data$z_Rate_separate <- scale(Moss_ID_data$Rate_separate)
+inv.mossphylo<-inverseA(Moss_tree,nodes="TIPS",scale=TRUE)
+
+p2 = list(B=list(mu=rep(0,4), V=diag(4)*1e+8), G=list(G1=list(V=1,nu=0.002)),
+          R=list(V=1,nu=0.002))
+
+m2a<-MCMCglmm(z_Rate_separate ~ Substrate, random = ~Genus,
+              ginverse=list(Genus=inv.mossphylo$Ainv),
+              family ="gaussian", data = Moss_ID_data,
+              prior=p2, nitt=110000, burnin=10000, thin=100,verbose=F)
+m2b<-MCMCglmm(z_Rate_separate ~ Substrate, random = ~Genus,
+              ginverse=list(Genus=inv.mossphylo$Ainv),
+              family ="gaussian", data = Moss_ID_data,
+              prior=p2, nitt=110000, burnin=10000, thin=100,verbose=F)
+m2c<-MCMCglmm(z_Rate_separate ~ Substrate, random = ~Genus,
+              ginverse=list(Genus=inv.mossphylo$Ainv),
+              family ="gaussian", data = Moss_ID_data,
+              prior=p2, nitt=110000, burnin=10000, thin=100,verbose=F)
+
+#Plot the fixed effects
+plot(mcmc.list(m2a$Sol,m2b$Sol,m2c$Sol))
+#And random effects
+plot(mcmc.list(m2a$Sol,m2b$Sol,m2c$Sol))
+
+gelman.diag(mcmc.list(m2a$Sol,m2b$Sol,m2c$Sol))
+
+summary(m2a)
+
+#### MCMCglmm z - Rate complete ~ Environment ####
+
+Moss_ID_data$z_Rate_complete <- scale(Moss_ID_data$Rate_complete)
+inv.mossphylo<-inverseA(Moss_tree,nodes="TIPS",scale=TRUE)
+
+p3 = list(B=list(mu=rep(0,2), V=diag(2)*1e+8), G=list(G1=list(V=1,nu=0.002)),
+          R=list(V=1,nu=0.002))
+
+m3a<-MCMCglmm(z_Rate_complete ~ Environment, random = ~Genus,
+              ginverse=list(Genus=inv.mossphylo$Ainv),
+              family ="gaussian", data = Moss_ID_data,
+              prior=p3, nitt=110000, burnin=10000, thin=100,verbose=F)
+m3b<-MCMCglmm(z_Rate_complete ~ Environment, random = ~Genus,
+              ginverse=list(Genus=inv.mossphylo$Ainv),
+              family ="gaussian", data = Moss_ID_data,
+              prior=p3, nitt=110000, burnin=10000, thin=100,verbose=F)
+m3c<-MCMCglmm(z_Rate_complete ~ Environment, random = ~Genus,
+              ginverse=list(Genus=inv.mossphylo$Ainv),
+              family ="gaussian", data = Moss_ID_data,
+              prior=p3, nitt=110000, burnin=10000, thin=100,verbose=F)
+
+#Plot the fixed effects
+plot(mcmc.list(m3a$Sol,m3b$Sol,m3c$Sol))
+#And random effects
+plot(mcmc.list(m3a$Sol,m3b$Sol,m3c$Sol))
+
+gelman.diag(mcmc.list(m3a$Sol,m3b$Sol,m3c$Sol))
+
+summary(m3a)
+
+#### MCMCglmm z - Rate separate ~ Environment  ####
+
+Moss_ID_data$z_Rate_separate <- scale(Moss_ID_data$Rate_separate)
+inv.mossphylo<-inverseA(Moss_tree,nodes="TIPS",scale=TRUE)
+
+p4 = list(B=list(mu=rep(0,2), V=diag(2)*1e+8), G=list(G1=list(V=1,nu=0.002)),
+          R=list(V=1,nu=0.002))
+
+m4a<-MCMCglmm(z_Rate_separate ~ Environment, random = ~Genus,
+              ginverse=list(Genus=inv.mossphylo$Ainv),
+              family ="gaussian", data = Moss_ID_data,
+              prior=p4, nitt=110000, burnin=10000, thin=100,verbose=F)
+m4b<-MCMCglmm(z_Rate_separate ~ Environment, random = ~Genus,
+              ginverse=list(Genus=inv.mossphylo$Ainv),
+              family ="gaussian", data = Moss_ID_data,
+              prior=p4, nitt=110000, burnin=10000, thin=100,verbose=F)
+m4c<-MCMCglmm(z_Rate_separate ~ Environment, random = ~Genus,
+              ginverse=list(Genus=inv.mossphylo$Ainv),
+              family ="gaussian", data = Moss_ID_data,
+              prior=p4, nitt=110000, burnin=10000, thin=100,verbose=F)
+
+#Plot the fixed effects
+plot(mcmc.list(m4a$Sol,m4b$Sol,m4c$Sol))
+#And random effects
+plot(mcmc.list(m4a$Sol,m4b$Sol,m4c$Sol))
+
+gelman.diag(mcmc.list(m4a$Sol,m4b$Sol,m4c$Sol))
+
+summary(m4a)
