@@ -317,7 +317,7 @@ inv.insectphylo_all<-inverseA(Moss_tree,nodes="ALL",scale=TRUE)
 p5 = list(B=list(mu=rep(0,1), V=diag(1)*1e+8), G=list(G1=list(V=1,nu=0.002)),
           R=list(V=1,nu=0.002))
 #model
-m5<-MCMCglmm(z_Rate_complete ~ 1, random = ~Genus,
+m5<-MCMCglmm(Rate_complete ~ 1, random = ~Genus,
              ginverse=list(Genus=inv.mossphylo$Ainv),
              family ="gaussian", data = Moss_ID_data, pr=TRUE,
              prior=p5, nitt=110000, burnin=10000, thin=100,verbose=F)
@@ -344,3 +344,14 @@ blupsm5['(Intercept)','effect']<-"Node1"
 
 #and remove the text "treetip." from the effect
 blupsm5$effect<-gsub("Genus.","",blupsm5$effect)
+
+#match with phylogeny
+#match the vitamin data and the insect tree data
+Rate_complete_phylo<-(Moss_ID_data$Rate_complete)[match(
+  Moss_tree$tip.label,Moss_ID_data$Genus)]
+
+#plot them and add the node numbers to being able to do 4.10
+plot(Moss_tree, cex=0.8, no.margin =T, label.offset = 0.7)
+nodelabels(pch=21, cex=(blupsm5$estimate[1:Moss_tree$Nnode])*500)
+tiplabels(pch=21,cex=Rate_complete_phylo*500,bg="black")
+#nodelabels(text=blupsm5$effect[1:Moss_tree$Nnode], frame = "none")
