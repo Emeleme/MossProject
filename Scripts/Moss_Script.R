@@ -218,7 +218,6 @@ summary(m1a)
 
 boxplot(Moss_ID_data$z_Rate_complete~Moss_ID_data$Substrate)
 boxplot(Moss_ID_data$z_Rate_separate~Moss_ID_data$Substrate)
-###### check phylogenetic signal heredability ####
 #### MCMCglmm z - Rate separate ~ substrate  ####
 
 Moss_ID_data$z_Rate_separate <- scale(Moss_ID_data$Rate_separate)
@@ -249,7 +248,7 @@ gelman.diag(mcmc.list(m2a$Sol,m2b$Sol,m2c$Sol))
 
 summary(m2a)
 
-###### check phylogenetic signal heredability ####
+
 #### MCMCglmm z - Rate complete ~ Environment ####
 
 Moss_ID_data$z_Rate_complete <- scale(Moss_ID_data$Rate_complete)
@@ -280,7 +279,6 @@ gelman.diag(mcmc.list(m3a$Sol,m3b$Sol,m3c$Sol))
 
 summary(m3a)
 
-###### check phylogenetic signal heredability ####
 #### MCMCglmm z - Rate separate ~ Environment  ####
 
 Moss_ID_data$z_Rate_separate <- scale(Moss_ID_data$Rate_separate)
@@ -310,48 +308,205 @@ plot(mcmc.list(m4a$Sol,m4b$Sol,m4c$Sol))
 gelman.diag(mcmc.list(m4a$Sol,m4b$Sol,m4c$Sol))
 
 summary(m4a)
-###### check phylogenetic signal heredability ####
-#### MCMCglmm Ancestral reconstruction 
-inv.insectphylo_all<-inverseA(Moss_tree,nodes="ALL",scale=TRUE)
+#### Data with means per Genus ####
+
+Moss_Genus_data <- Moss_ID_data %>% 
+  group_by(Genus) %>% 
+  summarise(mean_Rate_complete=mean(Rate_complete),
+            mean_Rate_separate=mean(Rate_separate),
+            mean_Immediate_diff_complete=mean(Immediate_diff_complete),
+            mean_Final_diff_complete=mean(Final_diff_complete),
+            mean_Immediate_diff_separated=mean(Immediate_diff_separated),
+            mean_Final_diff_separated=mean(Final_diff_separated))
+
+Moss_Genus_data <- as.data.frame(Moss_Genus_data)
+
+#### MCMCglmm Ancestral reconstruction rate_complete ####
+
+inv.mossphylo_all<-inverseA(Moss_tree,nodes="ALL",scale=TRUE)
 # set priors
 p5 = list(B=list(mu=rep(0,1), V=diag(1)*1e+8), G=list(G1=list(V=1,nu=0.002)),
           R=list(V=1,nu=0.002))
 #model
-m5<-MCMCglmm(Rate_complete ~ 1, random = ~Genus,
-             ginverse=list(Genus=inv.mossphylo$Ainv),
-             family ="gaussian", data = Moss_ID_data, pr=TRUE,
+m5a<-MCMCglmm(mean_Rate_complete ~ 1, random = ~Genus,
+             ginverse=list(Genus=inv.mossphylo_all$Ainv),
+             family ="gaussian", data = Moss_Genus_data, pr=TRUE,
+             prior=p5, nitt=110000, burnin=10000, thin=100,verbose=F)
+m5b<-MCMCglmm(mean_Rate_complete ~ 1, random = ~Genus,
+             ginverse=list(Genus=inv.mossphylo_all$Ainv),
+             family ="gaussian", data = Moss_Genus_data, pr=TRUE,
+             prior=p5, nitt=110000, burnin=10000, thin=100,verbose=F)
+m5c<-MCMCglmm(mean_Rate_complete ~ 1, random = ~Genus,
+             ginverse=list(Genus=inv.mossphylo_all$Ainv),
+             family ="gaussian", data = Moss_Genus_data, pr=TRUE,
              prior=p5, nitt=110000, burnin=10000, thin=100,verbose=F)
 
 #This are the logit not transformed back of the values for each family 
 #and each node
-posterior.mode(m5$Sol)
+posterior.mode(m5a$Sol)
+
+#Plot the fixed effects
+plot(mcmc.list(m5a$Sol,m5b$Sol,m5c$Sol))
+#And random effects
+plot(mcmc.list(m5a$Sol,m5b$Sol,m5c$Sol))
+
+gelman.diag(mcmc.list(m5a$Sol,m5b$Sol,m5c$Sol))
+
+summary(m5a)
 
 #BLUPS
 #To get estimates of ancestral states add intercept to node BLUPs
-blupsm5<-data.frame(effect=colnames(m5$Sol), estimate=posterior.mode(
-  m5$Sol[,'(Intercept)'])+posterior.mode(m5$Sol),CI=HPDinterval(
-    m5$Sol[,'(Intercept)']+m5$Sol))
+blupsm5a<-data.frame(effect=colnames(m5a$Sol), estimate=posterior.mode(
+  m5a$Sol[,'(Intercept)'])+posterior.mode(m5a$Sol),CI=HPDinterval(
+    m5a$Sol[,'(Intercept)']+m5a$Sol))
 
 #We added the intercept value to all values and so "Node1" value is incorrect 
 #- lets replace it
-blupsm5['(Intercept)','estimate']<-posterior.mode(m5$Sol[,'(Intercept)'])
-blupsm5['(Intercept)',c('CI.lower','CI.upper')]<-HPDinterval(
-  m5$Sol[,'(Intercept)'])
+blupsm5a['(Intercept)','estimate']<-posterior.mode(m5a$Sol[,'(Intercept)'])
+blupsm5a['(Intercept)',c('CI.lower','CI.upper')]<-HPDinterval(
+  m5a$Sol[,'(Intercept)'])
 
 #The intercept is the value of the root ("Node1") so lets rename it
-blupsm5$effect<-as.character(blupsm5$effect)
-blupsm5['(Intercept)','effect']<-"Node1"
+blupsm5a$effect<-as.character(blupsm5a$effect)
+blupsm5a['(Intercept)','effect']<-"Node1"
 
 #and remove the text "treetip." from the effect
-blupsm5$effect<-gsub("Genus.","",blupsm5$effect)
+blupsm5a$effect<-gsub("Genus.","",blupsm5a$effect)
 
 #match with phylogeny
 #match the vitamin data and the insect tree data
-Rate_complete_phylo<-(Moss_ID_data$Rate_complete)[match(
+mean_Rate_complete_phylo<-(Moss_Genus_data$mean_Rate_complete)[match(
+  Moss_tree$tip.label,Moss_Genus_data$Genus)]
+
+#plot them and add the node numbers to being able to do 4.10
+plot(Moss_tree, cex=0.8, no.margin =T, label.offset = 0.7)
+nodelabels(pch=21, cex=(abs(blupsm5a$estimate[1:Moss_tree$Nnode])*100))
+tiplabels(pch=21,cex=mean_Rate_complete_phylo*100,bg="black")
+
+
+#### check phylogenetic signal heredability rate_complete ####
+
+m5aPhyloSig<-m5a$VCV[,'Genus']/((m5a$VCV[,'Genus']+m5a$VCV[,'units']))
+
+#posterior.mode is the heredability value in this case
+posterior.mode(m5aPhyloSig)
+HPDinterval(m5aPhyloSig)
+
+plot(m5aPhyloSig)
+
+#### MCMCglmm Ancestral reconstruction rate_separate ####
+inv.mossphylo_all<-inverseA(Moss_tree,nodes="ALL",scale=TRUE)
+# set priors
+p6 = list(B=list(mu=rep(0,1), V=diag(1)*1e+8), G=list(G1=list(V=1,nu=0.002)),
+          R=list(V=1,nu=0.002))
+#model
+m6a<-MCMCglmm(mean_Rate_separate ~ 1, random = ~Genus,
+              ginverse=list(Genus=inv.mossphylo_all$Ainv),
+              family ="gaussian", data = Moss_Genus_data, pr=TRUE,
+              prior=p6, nitt=110000, burnin=10000, thin=100,verbose=F)
+m6b<-MCMCglmm(mean_Rate_separate ~ 1, random = ~Genus,
+              ginverse=list(Genus=inv.mossphylo_all$Ainv),
+              family ="gaussian", data = Moss_Genus_data, pr=TRUE,
+              prior=p6, nitt=110000, burnin=10000, thin=100,verbose=F)
+m6c<-MCMCglmm(mean_Rate_separate ~ 1, random = ~Genus,
+              ginverse=list(Genus=inv.mossphylo_all$Ainv),
+              family ="gaussian", data = Moss_Genus_data, pr=TRUE,
+              prior=p6, nitt=110000, burnin=10000, thin=100,verbose=F)
+
+#This are the logit not transformed back of the values for each family 
+#and each node
+posterior.mode(m6a$Sol)
+
+#Plot the fixed effects
+plot(mcmc.list(m6a$Sol,m6b$Sol,m6c$Sol))
+#And random effects
+plot(mcmc.list(m6a$Sol,m6b$Sol,m6c$Sol))
+
+gelman.diag(mcmc.list(m6a$Sol,m6b$Sol,m6c$Sol))
+
+summary(m6a)
+
+#BLUPS
+#To get estimates of ancestral states add intercept to node BLUPs
+blupsm6a<-data.frame(effect=colnames(m6a$Sol), estimate=posterior.mode(
+  m6a$Sol[,'(Intercept)'])+posterior.mode(m6a$Sol),CI=HPDinterval(
+    m6a$Sol[,'(Intercept)']+m6a$Sol))
+
+#We added the intercept value to all values and so "Node1" value is incorrect 
+#- lets replace it
+blupsm6a['(Intercept)','estimate']<-posterior.mode(m6a$Sol[,'(Intercept)'])
+blupsm6a['(Intercept)',c('CI.lower','CI.upper')]<-HPDinterval(
+  m6a$Sol[,'(Intercept)'])
+
+#The intercept is the value of the root ("Node1") so lets rename it
+blupsm6a$effect<-as.character(blupsm6a$effect)
+blupsm6a['(Intercept)','effect']<-"Node1"
+
+#and remove the text "treetip." from the effect
+blupsm6a$effect<-gsub("Genus.","",blupsm6a$effect)
+
+#match with phylogeny
+#match the vitamin data and the insect tree data
+mean_Rate_separate_phylo<-(Moss_Genus_data$mean_Rate_separate)[match(
+  Moss_tree$tip.label,Moss_Genus_data$Genus)]
+
+#plot them and add the node numbers to being able to do 4.10
+plot(Moss_tree, cex=0.8, no.margin =T, label.offset = 0.7)
+nodelabels(pch=21, cex=(abs(blupsm6a$estimate[1:Moss_tree$Nnode])*100))
+tiplabels(pch=21,cex=mean_Rate_separate_phylo*100,bg="black")
+
+#### check phylogenetic signal heredability rate_separate ####
+
+m6aPhyloSig<-m6a$VCV[,'Genus']/((m6a$VCV[,'Genus']+m6a$VCV[,'units']))
+
+#posterior.mode is the heredability value in this case
+posterior.mode(m6aPhyloSig)
+HPDinterval(m6aPhyloSig)
+
+plot(m6aPhyloSig)
+
+#### MCMCglmm Ancestral reconstruction substrate ####
+inv.mossphylo_all<-inverseA(Moss_tree,nodes="ALL",scale=TRUE)
+# set priors
+p7 = list(B=list(mu=rep(0,1), V=diag(1)*1e+8), G=list(G1=list(V=1,nu=0.002)),
+          R=list(V=1,nu=0.002))
+
+#model
+m7<-MCMCglmm(Substrate ~ 1, random = ~Genus,
+             ginverse=list(Genus=inv.mossphylo_all$Ainv),
+             family ="categorical", data = Moss_ID_data, pr=TRUE, 
+             rcov = ~us(trait):units,
+             prior=p7, nitt=110000, burnin=10000, thin=100,verbose=F)
+
+#This are the logit not transformed back of the values for each family 
+#and each node
+posterior.mode(m7$Sol)
+
+#BLUPS
+#To get estimates of ancestral states add intercept to node BLUPs
+blupsm7<-data.frame(effect=colnames(m7$Sol), estimate=posterior.mode(
+  m7$Sol[,'(Intercept)'])+posterior.mode(m7$Sol),CI=HPDinterval(
+    m7$Sol[,'(Intercept)']+m7$Sol))
+
+#We added the intercept value to all values and so "Node1" value is incorrect 
+#- lets replace it
+blupsm7['(Intercept)','estimate']<-posterior.mode(m7$Sol[,'(Intercept)'])
+blupsm7['(Intercept)',c('CI.lower','CI.upper')]<-HPDinterval(
+  m7$Sol[,'(Intercept)'])
+
+#The intercept is the value of the root ("Node1") so lets rename it
+blupsm7$effect<-as.character(blupsm7$effect)
+blupsm7['(Intercept)','effect']<-"Node1"
+
+#and remove the text "treetip." from the effect
+blupsm7$effect<-gsub("Genus.","",blupsm7$effect)
+
+#match with phylogeny
+#match the vitamin data and the insect tree data
+Rate_complete_phylo<-(Moss_ID_data$Rate_separate)[match(
   Moss_tree$tip.label,Moss_ID_data$Genus)]
 
 #plot them and add the node numbers to being able to do 4.10
 plot(Moss_tree, cex=0.8, no.margin =T, label.offset = 0.7)
-nodelabels(pch=21, cex=(blupsm5$estimate[1:Moss_tree$Nnode])*500)
-tiplabels(pch=21,cex=Rate_complete_phylo*500,bg="black")
-#nodelabels(text=blupsm5$effect[1:Moss_tree$Nnode], frame = "none")
+nodelabels(pch=21, cex=(abs(blupsm7$estimate[1:Moss_tree$Nnode])*200))
+tiplabels(pch=21,cex=Rate_complete_phylo*200,bg="black")
