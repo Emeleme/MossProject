@@ -218,6 +218,7 @@ summary(m1a)
 
 boxplot(Moss_ID_data$z_Rate_complete~Moss_ID_data$Substrate)
 boxplot(Moss_ID_data$z_Rate_separate~Moss_ID_data$Substrate)
+###### check phylogenetic signal heredability ####
 #### MCMCglmm z - Rate separate ~ substrate  ####
 
 Moss_ID_data$z_Rate_separate <- scale(Moss_ID_data$Rate_separate)
@@ -248,6 +249,7 @@ gelman.diag(mcmc.list(m2a$Sol,m2b$Sol,m2c$Sol))
 
 summary(m2a)
 
+###### check phylogenetic signal heredability ####
 #### MCMCglmm z - Rate complete ~ Environment ####
 
 Moss_ID_data$z_Rate_complete <- scale(Moss_ID_data$Rate_complete)
@@ -278,6 +280,7 @@ gelman.diag(mcmc.list(m3a$Sol,m3b$Sol,m3c$Sol))
 
 summary(m3a)
 
+###### check phylogenetic signal heredability ####
 #### MCMCglmm z - Rate separate ~ Environment  ####
 
 Moss_ID_data$z_Rate_separate <- scale(Moss_ID_data$Rate_separate)
@@ -307,3 +310,37 @@ plot(mcmc.list(m4a$Sol,m4b$Sol,m4c$Sol))
 gelman.diag(mcmc.list(m4a$Sol,m4b$Sol,m4c$Sol))
 
 summary(m4a)
+###### check phylogenetic signal heredability ####
+#### MCMCglmm Ancestral reconstruction 
+inv.insectphylo_all<-inverseA(Moss_tree,nodes="ALL",scale=TRUE)
+# set priors
+p5 = list(B=list(mu=rep(0,1), V=diag(1)*1e+8), G=list(G1=list(V=1,nu=0.002)),
+          R=list(V=1,nu=0.002))
+#model
+m5<-MCMCglmm(z_Rate_complete ~ 1, random = ~Genus,
+             ginverse=list(Genus=inv.mossphylo$Ainv),
+             family ="gaussian", data = Moss_ID_data, pr=TRUE,
+             prior=p5, nitt=110000, burnin=10000, thin=100,verbose=F)
+
+#This are the logit not transformed back of the values for each family 
+#and each node
+posterior.mode(m5$Sol)
+
+#BLUPS
+#To get estimates of ancestral states add intercept to node BLUPs
+blupsm5<-data.frame(effect=colnames(m5$Sol), estimate=posterior.mode(
+  m5$Sol[,'(Intercept)'])+posterior.mode(m5$Sol),CI=HPDinterval(
+    m5$Sol[,'(Intercept)']+m5$Sol))
+
+#We added the intercept value to all values and so "Node1" value is incorrect 
+#- lets replace it
+blupsm5['(Intercept)','estimate']<-posterior.mode(m5$Sol[,'(Intercept)'])
+blupsm5['(Intercept)',c('CI.lower','CI.upper')]<-HPDinterval(
+  m5$Sol[,'(Intercept)'])
+
+#The intercept is the value of the root ("Node1") so lets rename it
+blupsm5$effect<-as.character(blupsm5$effect)
+blupsm5['(Intercept)','effect']<-"Node1"
+
+#and remove the text "treetip." from the effect
+blupsm5$effect<-gsub("Genus.","",blupsm5$effect)
