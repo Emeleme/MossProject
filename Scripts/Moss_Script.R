@@ -19,14 +19,15 @@ pacman::p_load(openxlsx,tidyverse,RColorBrewer,ape,MCMCglmm,picante,geiger,
 
 
 #### Uploading data ####
+
 Moss_data<-read.xlsx("Data/Moss_Data_Full.xlsx", sheet="Dry_data")
 Moss_complete<-read.xlsx("Data/Moss_Data_Full.xlsx", sheet="Complete") 
 Moss_separate<-read.xlsx("Data/Moss_Data_Full.xlsx", sheet="Separate") 
 Moss_tree_raw<- read.tree("Data/Concat.treefile")
 Moss_tips <- read.csv("Data/tips.txt", h=F)
 
-
 #### Tree prunning ####
+
 #Are all species in the tips file in the tree?
 table(Moss_tips$V1 %in% Moss_tree_raw$tip.label)
 
@@ -44,6 +45,7 @@ Moss_tree$tip.label <- sub(".*\\.", "", Moss_tree$tip.label)
 Moss_tree$tip.label <- sub("_.*", "", Moss_tree$tip.label)
 
 #Convert to ultrametric tree
+Moss_tree_phylo <- Moss_tree
 Moss_tree<- chronos(Moss_tree)
 
 #Delete node.labels 
@@ -53,6 +55,7 @@ plot(Moss_tree)
 nodelabels()
 
 #### Calculating rates ID ####
+
 #We use the rates from min 30 to min 120 because 0-30min is water dropping
 rate_times <- c(30, 60, 90, 120)
 
@@ -77,10 +80,12 @@ Moss_rates_ID <- merge(Moss_rates_complete_ID, Moss_rates_separate_ID,
                        by=c("Genus", "ID"))
 colnames(Moss_rates_ID) <- c("Genus", "ID", "Rate_complete", "Rate_separate")
 
+#To make a rate per day
 Moss_rates_ID$Rate_complete<- abs((Moss_rates_ID$Rate_complete)*1440)
 Moss_rates_ID$Rate_separate<- abs((Moss_rates_ID$Rate_separate)*1440)
 
 #### Calculating rates _Genus ####
+
 #We use the rates from min 30 to min 120 because 0-30min is water dropping
 Moss_rates_complete_Genus <- Filter_complete %>%
   group_by(Genus) %>%
@@ -141,18 +146,6 @@ Moss_diff_c_ID <- select(Moss_diff_c_ID, -c("0","30.x","30.y","660"))
 
 Moss_diff_s_ID <- merge(Diff_separate_i,Diff_separate_f, by=c("ID", "Genus"))
 Moss_diff_s_ID <- select(Moss_diff_s_ID, -c("0","30.x","30.y","660"))
-
-#### Calculate the differences between initial and end wetness _Genus ####
-
-# Moss_diff_c_Genus <- Moss_diff_c_ID %>% 
-#   group_by(Genus) %>% 
-#   summarise(mean_imm_diff=mean(Immediate_diff_complete),
-#             mean_final_diff=mean(Final_diff_complete))
-# 
-# Moss_diff_s_Genus <- Moss_diff_s_ID %>% 
-#   group_by(Genus) %>% 
-#   summarise(mean_imm_diff=mean(Immediate_diff_separated),
-#             mean_final_diff=mean(Final_diff_separated))
 
 #### Make the complete dataframe for all values ####
 
@@ -310,8 +303,6 @@ gelman.diag(mcmc.list(m1a$Sol,m1b$Sol,m1c$Sol))
 
 summary(m1a)
 
-# boxplot(Moss_ID_data$z_Rate_complete~Moss_ID_data$Substrate)
-# boxplot(Moss_ID_data$z_Rate_separate~Moss_ID_data$Substrate)
 #### MCMCglmm z - Rate separate ~ substrate  ####
 
 Moss_ID_data$z_Rate_separate <- scale(Moss_ID_data$Rate_separate)
@@ -343,7 +334,6 @@ plot(mcmc.list(m2a$Sol,m2b$Sol,m2c$Sol))
 gelman.diag(mcmc.list(m2a$Sol,m2b$Sol,m2c$Sol))
 
 summary(m2a)
-
 
 #### MCMCglmm z - Rate complete ~ Environment ####
 
@@ -409,12 +399,8 @@ gelman.diag(mcmc.list(m4a$Sol,m4b$Sol,m4c$Sol))
 
 summary(m4a)
 
-
-
 ################################################################################
 #### MCMCglmm Immediate loss complete ~ substrate ####
-
-#Moss_ID_data$z_Rate_complete <- scale(Moss_ID_data$Immediate_diff_complete)
 
 #Inverse tree using OU
 inv.mossphylo<-inverseA(moss_tree_OU,nodes="TIPS",scale=TRUE)
@@ -444,8 +430,6 @@ gelman.diag(mcmc.list(i_m1a$Sol,i_m1b$Sol,i_m1c$Sol))
 
 summary(i_m1a)
 
-# boxplot(Moss_ID_data$z_Rate_complete~Moss_ID_data$Substrate)
-# boxplot(Moss_ID_data$z_Rate_separate~Moss_ID_data$Substrate)
 #### MCMCglmm Immediate loss separate ~ substrate  ####
 
 #Moss_ID_data$z_Rate_separate <- scale(Moss_ID_data$Immediate_diff_separated)
@@ -477,7 +461,6 @@ plot(mcmc.list(i_m2a$Sol,i_m2b$Sol,i_m2c$Sol))
 gelman.diag(mcmc.list(i_m2a$Sol,i_m2b$Sol,i_m2c$Sol))
 
 summary(i_m2a)
-
 
 #### MCMCglmm Immediate loss complete ~ Environment ####
 
@@ -543,12 +526,8 @@ gelman.diag(mcmc.list(i_m4a$Sol,i_m4b$Sol,i_m4c$Sol))
 
 summary(i_m4a)
 
-
-
-
-
 ################################################################################
-#### Pairwise comparison immediate loss per Substrate & Environment ####
+#### Pairwise comparison per Substrate & Environment ####
 # Function to compute posterior modes and HPD intervals for specified comparisons
 pairwise_comparison <- function(model, comparisons) {
   results <- data.frame(Comparison = character(),
@@ -579,17 +558,26 @@ comparisons_substrate <- list(c(1, 2),  # Rock vs Sand
                     c(1, 4),  # Rock vs Wood
                     c(2, 4))  # Sand vs Wood
 
+#For rates models
 pairwise_table_m1a <- pairwise_comparison(m1a, comparisons_substrate)
 pairwise_table_m2a <- pairwise_comparison(m2a, comparisons_substrate)
 pairwise_table_m3a <- pairwise_comparison(m3a, comparisons = list(c(1,2)))
 pairwise_table_m4a <- pairwise_comparison(m4a, comparisons = list(c(1,2)))
 
+#For Immediate loss models
 pairwise_table_i_m1a <- pairwise_comparison(i_m1a, comparisons_substrate)
 pairwise_table_i_m2a <- pairwise_comparison(i_m2a, comparisons_substrate)
 pairwise_table_i_m3a <- pairwise_comparison(i_m3a, comparisons = list(c(1,2)))
 pairwise_table_i_m4a <- pairwise_comparison(i_m4a, comparisons = list(c(1,2)))
+
 ################################################################################
 #### MCMCglmm Ancestral reconstruction rate_complete ####
+
+#THERE'S NO POINT IN DOING THE ANCESTRAL RECONSTRUCTIONS NOW THAT WE KNOW THAT
+#THERE'S NO PHYLOGENETIC SIGNAL FOR THE TRAITS. BUT I DID IT BEFORE AND I DON'T 
+#WANT TO DELETE IT FROM THE CODE. CALL THIS THE UNUSED CODE THAT I'M AFRAID OF 
+#LOOSING IF YOU WANT :)
+
 #Inverse tree using OU
 inv.mossphylo_all<-inverseA(moss_tree_OU,nodes="ALL",scale=TRUE)
 
@@ -598,17 +586,17 @@ p5 = list(B=list(mu=rep(0,1), V=diag(1)*1e+8), G=list(G1=list(V=1,nu=0.002)),
           R=list(V=1,nu=0.002))
 #model
 m5a<-MCMCglmm(mean_Rate_complete ~ 1, random = ~Genus,
-             ginverse=list(Genus=inv.mossphylo_all$Ainv),
-             family ="gaussian", data = Moss_Genus_data, pr=TRUE,
-             prior=p5, nitt=110000, burnin=10000, thin=100,verbose=F)
+              ginverse=list(Genus=inv.mossphylo_all$Ainv),
+              family ="gaussian", data = Moss_Genus_data, pr=TRUE,
+              prior=p5, nitt=110000, burnin=10000, thin=100,verbose=F)
 m5b<-MCMCglmm(mean_Rate_complete ~ 1, random = ~Genus,
-             ginverse=list(Genus=inv.mossphylo_all$Ainv),
-             family ="gaussian", data = Moss_Genus_data, pr=TRUE,
-             prior=p5, nitt=110000, burnin=10000, thin=100,verbose=F)
+              ginverse=list(Genus=inv.mossphylo_all$Ainv),
+              family ="gaussian", data = Moss_Genus_data, pr=TRUE,
+              prior=p5, nitt=110000, burnin=10000, thin=100,verbose=F)
 m5c<-MCMCglmm(mean_Rate_complete ~ 1, random = ~Genus,
-             ginverse=list(Genus=inv.mossphylo_all$Ainv),
-             family ="gaussian", data = Moss_Genus_data, pr=TRUE,
-             prior=p5, nitt=110000, burnin=10000, thin=100,verbose=F)
+              ginverse=list(Genus=inv.mossphylo_all$Ainv),
+              family ="gaussian", data = Moss_Genus_data, pr=TRUE,
+              prior=p5, nitt=110000, burnin=10000, thin=100,verbose=F)
 
 #This are the logit not transformed back of the values for each family 
 #and each node
@@ -655,7 +643,7 @@ nodelabels(pch=21, cex=(blupsm5a$estimate[1:moss_tree_OU$Nnode]/2.5))
 tiplabels(pch=21,cex=mean_Rate_complete_phylo/2.5,bg="black")
 
 
-#### check phylogenetic signal heredability rate_complete ####
+#### check phylogenetic signal rate_complete ####
 
 m5aPhyloSig<-m5a$VCV[,'Genus']/((m5a$VCV[,'Genus']+m5a$VCV[,'units']))
 
@@ -728,7 +716,7 @@ plot(moss_tree_OU, cex=0.8, no.margin =T, label.offset = 0.02)
 nodelabels(pch=21, cex=(blupsm6a$estimate[1:moss_tree_OU$Nnode]/2.5))
 tiplabels(pch=21,cex=mean_Rate_separate_phylo/2.5,bg="black")
 
-#### check phylogenetic signal heredability rate_separate ####
+#### check phylogenetic signal rate_separate ####
 
 m6aPhyloSig<-m6a$VCV[,'Genus']/((m6a$VCV[,'Genus']+m6a$VCV[,'units']))
 
@@ -774,6 +762,44 @@ ggplot(data = Moss_ID_data) +
        y = "Immediate Loss Complete") +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5))
+
+
+Moss_tree_data <- left_join(Moss_tree_phylo, Moss_ID_data, by = c("label" = "Genus"))
+
+
+mean_Rate_separate_phylo<-(Moss_Genus_data$mean_Rate_separate)[match(
+  moss_tree_OU$tip.label,Moss_Genus_data$Genus)]
+
+#Rates
+plot(Moss_tree, cex=0.8, no.margin =T, label.offset = 0.1)
+tiplabels(pch=21,cex=Moss_Genus_data$mean_Rate_complete/3)
+
+plot(Moss_tree, cex=0.8, no.margin =T, label.offset = 0.15)
+tiplabels(pch=21,cex=Moss_Genus_data$mean_Rate_separate/3)
+
+#Immediate loss difference
+plot(Moss_tree, cex=0.8, no.margin =T, label.offset = 0.1)
+tiplabels(pch=21,cex=Moss_Genus_data$mean_Immediate_diff_complete)
+
+plot(Moss_tree, cex=0.8, no.margin =T, label.offset = 0.1)
+tiplabels(pch=21,cex=Moss_Genus_data$mean_Immediate_diff_separate)
+
+
+
+
+
+################################################################################
+#### Calculate the differences between initial and end wetness _Genus ####
+
+# Moss_diff_c_Genus <- Moss_diff_c_ID %>% 
+#   group_by(Genus) %>% 
+#   summarise(mean_imm_diff=mean(Immediate_diff_complete),
+#             mean_final_diff=mean(Final_diff_complete))
+# 
+# Moss_diff_s_Genus <- Moss_diff_s_ID %>% 
+#   group_by(Genus) %>% 
+#   summarise(mean_imm_diff=mean(Immediate_diff_separated),
+#             mean_final_diff=mean(Final_diff_separated))
 
 #### PGLS Ancestral reconstruction substrate ####
 # inv.mossphylo_all<-inverseA(Moss_tree,nodes="ALL",scale=TRUE)
