@@ -166,6 +166,11 @@ Moss_Genus_data <- Moss_ID_data %>%
 Moss_Genus_data <- as.data.frame(Moss_Genus_data)
 
 
+#### Check correlation between variables ####
+#As they are highly correlated, only work with biological meaning
+ggpairs(Moss_ID_data, columns = c("Immediate_diff_complete","Final_diff_complete",
+                             "Immediate_diff_separated", "Final_diff_separated",
+                             "Rate_complete", "Rate_complete"))
 ################################################################################
 #### Calculate modes of evolution Genus ####
  
@@ -733,7 +738,7 @@ selected_palette <- paletteer_d("tvthemes::kimPossible")
 pale_wes_palette <- scales::alpha(wes_palette, 0.5)
 
 #rates
-ggplot(data = Moss_ID_data) +
+a <- ggplot(data = Moss_ID_data) +
   geom_violin(aes(x = Substrate, y = Rate_complete, fill = Substrate), 
               trim = FALSE) +
   stat_summary(fun = mean, geom = "point", aes(
@@ -742,13 +747,12 @@ ggplot(data = Moss_ID_data) +
     x = Substrate, y = Rate_complete, group = Genus, col = Genus)) +
   scale_fill_manual(values = pale_wes_palette) +
   scale_color_manual(values = selected_palette) +
-  labs(title = "Violin Plot of Immediate Loss Separted by Substrate",
-       x = "Substrate",
-       y = "Immediate Loss Complete") +
+  labs(x = "Substrate",
+       y = "Rate complete") +
   theme_classic() +
   theme(plot.title = element_text(hjust = 0.5))
 
-ggplot(data = Moss_ID_data) +
+b <- ggplot(data = Moss_ID_data) +
   geom_violin(aes(x = Substrate, y = Rate_separate, fill = Substrate), 
               trim = FALSE) +
   stat_summary(fun = mean, geom = "point", aes(
@@ -757,14 +761,13 @@ ggplot(data = Moss_ID_data) +
     x = Substrate, y = Rate_separate, group = Genus, col = Genus)) +
   scale_fill_manual(values = pale_wes_palette) +
   scale_color_manual(values = selected_palette) +
-  labs(title = "Violin Plot of Immediate Loss Separted by Substrate",
-       x = "Substrate",
-       y = "Immediate Loss Complete") +
+  labs(x = "Substrate",
+       y = "Rate separate") +
   theme_classic() +
   theme(plot.title = element_text(hjust = 0.5))
 
 #Immediate loss
-ggplot(data = Moss_ID_data) +
+c <- ggplot(data = Moss_ID_data) +
   geom_violin(aes(x = Substrate, y = Immediate_diff_separated, fill = Substrate), 
               trim = FALSE) +
   stat_summary(fun = mean, geom = "point", aes(
@@ -773,13 +776,12 @@ ggplot(data = Moss_ID_data) +
     x = Substrate, y = Immediate_diff_separated, group = Genus, col = Genus)) +
   scale_fill_manual(values = pale_wes_palette) +
   scale_color_manual(values = selected_palette) +
-  labs(title = "Violin Plot of Immediate Loss Separted by Substrate",
-       x = "Substrate",
-       y = "Immediate Loss Complete") +
+  labs(x = "Substrate",
+       y = "Immediate Loss Separate") +
   theme_classic() +
   theme(plot.title = element_text(hjust = 0.5))
 
-ggplot(data = Moss_ID_data) +
+d <- ggplot(data = Moss_ID_data) +
   geom_violin(aes(x = Substrate, y = Immediate_diff_complete, fill = Substrate), 
               trim = FALSE) +
   stat_summary(fun = mean, geom = "point", aes(
@@ -788,27 +790,33 @@ ggplot(data = Moss_ID_data) +
     x = Substrate, y = Immediate_diff_complete, group = Genus, col = Genus)) +
   scale_fill_manual(values = pale_wes_palette) +
   scale_color_manual(values = selected_palette) +
-  labs(title = "Violin Plot of Immediate Loss Separted by Substrate",
-       x = "Substrate",
+  labs(x = "Substrate",
        y = "Immediate Loss Complete") +
   theme_classic() +
   theme(plot.title = element_text(hjust = 0.5))
 
+all_violin_plots <- ggarrange(a, b, c, d, 
+          labels = c("A", "B", "C", "D"),
+          ncol = 2, nrow = 2,
+          common.legend = TRUE, legend="right")
+#ggsave("Figures/violin_plots.png")
+
 #Tree
-plot(Moss_tree, cex=1.3, no.margin =T, label.offset = 0.4)
+#png(filename = "Figures/moss_trait_tree.png")
+plot(Moss_tree, cex=1.3, no.margin =T, label.offset = 0.62)
 tiplabels(pch=21,cex=Moss_Genus_data$mean_Rate_complete/3, 
           offset = 0.1, col="green4", bg="green4")
 tiplabels(pch=21,cex=Moss_Genus_data$mean_Rate_separate/3, 
-          offset = 0.18, col="yellow", bg="yellow")
+          offset = 0.25, col="gold", bg="gold")
 tiplabels(pch=21,cex=Moss_Genus_data$mean_Immediate_diff_complete, 
-          offset = 0.26, col="orangered2", bg="orangered2")
+          offset = 0.4, col="orangered2", bg="orangered2")
 tiplabels(pch=21,cex=Moss_Genus_data$mean_Immediate_diff_separate, 
-          offset = 0.34, col="orange2", bg="orange2")
+          offset = 0.55, col="orange2", bg="orange2")
 legend("bottomleft", legend=c(
   "Dehydration rate complete", "Dehydration rate separate",
   "Immediate loss complete", "Immediate loss separate"), pch=15, 
-  col=c("green4", "yellow","orangered2","orange2"), cex=0.8, box.lty=0)
-
+  col=c("green4", "gold","orangered2","orange2"), cex=1, box.lty=0)
+#dev.off()
 ################################################################################
 #### Calculate the differences between initial and end wetness _Genus ####
 
