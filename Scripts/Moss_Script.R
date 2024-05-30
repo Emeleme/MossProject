@@ -15,7 +15,7 @@
 ##### Data manipulation #####
 pacman::p_load(openxlsx,tidyverse,RColorBrewer,ape,MCMCglmm,picante,geiger,
                phytools,ggtree, treeio,ggimage, broom, ggally, wesanderson,
-               paletteer, coda)
+               paletteer, coda, ggpubr, ggplot2)
 
 
 #### Uploading data ####
@@ -728,11 +728,42 @@ plot(m6aPhyloSig)
 
 ################################################################################
 #### Graphics ####
-wes_palette <- paletteer_d("tvthemes::Day")
-selected_palette <- paletteer_d("tvthemes::gravityFalls")
+wes_palette <- paletteer_d("wesanderson::FantasticFox1")
+selected_palette <- paletteer_d("tvthemes::kimPossible")
 pale_wes_palette <- scales::alpha(wes_palette, 0.5)
 
+#rates
+ggplot(data = Moss_ID_data) +
+  geom_violin(aes(x = Substrate, y = Rate_complete, fill = Substrate), 
+              trim = FALSE) +
+  stat_summary(fun = mean, geom = "point", aes(
+    x = Substrate, y = Rate_complete, group = Genus, col = Genus)) +
+  stat_summary(fun = mean, geom = "line", aes(
+    x = Substrate, y = Rate_complete, group = Genus, col = Genus)) +
+  scale_fill_manual(values = pale_wes_palette) +
+  scale_color_manual(values = selected_palette) +
+  labs(title = "Violin Plot of Immediate Loss Separted by Substrate",
+       x = "Substrate",
+       y = "Immediate Loss Complete") +
+  theme_classic() +
+  theme(plot.title = element_text(hjust = 0.5))
 
+ggplot(data = Moss_ID_data) +
+  geom_violin(aes(x = Substrate, y = Rate_separate, fill = Substrate), 
+              trim = FALSE) +
+  stat_summary(fun = mean, geom = "point", aes(
+    x = Substrate, y = Rate_separate, group = Genus, col = Genus)) +
+  stat_summary(fun = mean, geom = "line", aes(
+    x = Substrate, y = Rate_separate, group = Genus, col = Genus)) +
+  scale_fill_manual(values = pale_wes_palette) +
+  scale_color_manual(values = selected_palette) +
+  labs(title = "Violin Plot of Immediate Loss Separted by Substrate",
+       x = "Substrate",
+       y = "Immediate Loss Complete") +
+  theme_classic() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+#Immediate loss
 ggplot(data = Moss_ID_data) +
   geom_violin(aes(x = Substrate, y = Immediate_diff_separated, fill = Substrate), 
               trim = FALSE) +
@@ -745,7 +776,7 @@ ggplot(data = Moss_ID_data) +
   labs(title = "Violin Plot of Immediate Loss Separted by Substrate",
        x = "Substrate",
        y = "Immediate Loss Complete") +
-  theme_minimal() +
+  theme_classic() +
   theme(plot.title = element_text(hjust = 0.5))
 
 ggplot(data = Moss_ID_data) +
@@ -760,33 +791,23 @@ ggplot(data = Moss_ID_data) +
   labs(title = "Violin Plot of Immediate Loss Separted by Substrate",
        x = "Substrate",
        y = "Immediate Loss Complete") +
-  theme_minimal() +
+  theme_classic() +
   theme(plot.title = element_text(hjust = 0.5))
 
-
-Moss_tree_data <- left_join(Moss_tree_phylo, Moss_ID_data, by = c("label" = "Genus"))
-
-
-mean_Rate_separate_phylo<-(Moss_Genus_data$mean_Rate_separate)[match(
-  moss_tree_OU$tip.label,Moss_Genus_data$Genus)]
-
-#Rates
-plot(Moss_tree, cex=0.8, no.margin =T, label.offset = 0.1)
-tiplabels(pch=21,cex=Moss_Genus_data$mean_Rate_complete/3)
-
-plot(Moss_tree, cex=0.8, no.margin =T, label.offset = 0.15)
-tiplabels(pch=21,cex=Moss_Genus_data$mean_Rate_separate/3)
-
-#Immediate loss difference
-plot(Moss_tree, cex=0.8, no.margin =T, label.offset = 0.1)
-tiplabels(pch=21,cex=Moss_Genus_data$mean_Immediate_diff_complete)
-
-plot(Moss_tree, cex=0.8, no.margin =T, label.offset = 0.1)
-tiplabels(pch=21,cex=Moss_Genus_data$mean_Immediate_diff_separate)
-
-
-
-
+#Tree
+plot(Moss_tree, cex=1.3, no.margin =T, label.offset = 0.4)
+tiplabels(pch=21,cex=Moss_Genus_data$mean_Rate_complete/3, 
+          offset = 0.1, col="green4", bg="green4")
+tiplabels(pch=21,cex=Moss_Genus_data$mean_Rate_separate/3, 
+          offset = 0.18, col="yellow", bg="yellow")
+tiplabels(pch=21,cex=Moss_Genus_data$mean_Immediate_diff_complete, 
+          offset = 0.26, col="orangered2", bg="orangered2")
+tiplabels(pch=21,cex=Moss_Genus_data$mean_Immediate_diff_separate, 
+          offset = 0.34, col="orange2", bg="orange2")
+legend("bottomleft", legend=c(
+  "Dehydration rate complete", "Dehydration rate separate",
+  "Immediate loss complete", "Immediate loss separate"), pch=15, 
+  col=c("green4", "yellow","orangered2","orange2"), cex=0.8, box.lty=0)
 
 ################################################################################
 #### Calculate the differences between initial and end wetness _Genus ####
