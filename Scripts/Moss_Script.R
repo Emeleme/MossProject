@@ -1,5 +1,13 @@
 ################################################################################
 ##### MOSS PROJECT SCRIPT #####
+#Author: Maria Laura Mahecha Escobar
+#Organization: Lund University
+#Course: Evolution Methods and applications
+#Date: 2024a05m30d
+#Project description: 1. Are moss species (Bryophyta) growing in dry substrates
+#                     better at water retention?
+#                     2. Is there a phylogenetic signal in water retention of 
+#                     mosses?
 ################################################################################
 
 #usethis::use_github()
@@ -164,6 +172,7 @@ Moss_Genus_data <- Moss_ID_data %>%
 Moss_Genus_data <- as.data.frame(Moss_Genus_data)
 
 
+################################################################################
 #### Calculate modes of evolution Genus ####
  
 #Match tips with rate complete
@@ -267,6 +276,7 @@ immediate_separate_evol<- modes_evol(MossImS_label)
 
 moss_tree_OU<-rescale(Moss_tree, "OU", alpha=2.71828182845905)
 
+################################################################################
 #### MCMCglmm z - Rate complete ~ substrate ####
 
 Moss_ID_data$z_Rate_complete <- scale(Moss_ID_data$Rate_complete)
@@ -399,6 +409,144 @@ gelman.diag(mcmc.list(m4a$Sol,m4b$Sol,m4c$Sol))
 summary(m4a)
 
 
+
+################################################################################
+#### MCMCglmm Immediate loss complete ~ substrate ####
+
+#Moss_ID_data$z_Rate_complete <- scale(Moss_ID_data$Immediate_diff_complete)
+
+#Inverse tree using OU
+inv.mossphylo<-inverseA(moss_tree_OU,nodes="TIPS",scale=TRUE)
+
+i_p1 = list(B=list(mu=rep(0,4), V=diag(4)*1e+8), G=list(G1=list(V=1,nu=0.002)),
+          R=list(V=1,nu=0.002))
+
+i_m1a<-MCMCglmm(Immediate_diff_complete ~ Substrate, random = ~Genus,
+              ginverse=list(Genus=inv.mossphylo$Ainv),
+              family ="gaussian", data = Moss_ID_data,
+              prior=i_p1, nitt=110000, burnin=10000, thin=100,verbose=F)
+i_m1b<-MCMCglmm(Immediate_diff_complete ~ Substrate, random = ~Genus,
+              ginverse=list(Genus=inv.mossphylo$Ainv),
+              family ="gaussian", data = Moss_ID_data,
+              prior=i_p1, nitt=110000, burnin=10000, thin=100,verbose=F)
+i_m1c<-MCMCglmm(Immediate_diff_complete ~ Substrate, random = ~Genus,
+              ginverse=list(Genus=inv.mossphylo$Ainv),
+              family ="gaussian", data = Moss_ID_data,
+              prior=i_p1, nitt=110000, burnin=10000, thin=100,verbose=F)
+
+#Plot the fixed effects
+plot(mcmc.list(i_m1a$Sol,i_m1b$Sol,i_m1c$Sol))
+#And random effects
+plot(mcmc.list(i_m1a$Sol,i_m1b$Sol,i_m1c$Sol))
+
+gelman.diag(mcmc.list(i_m1a$Sol,i_m1b$Sol,i_m1c$Sol))
+
+summary(i_m1a)
+
+# boxplot(Moss_ID_data$z_Rate_complete~Moss_ID_data$Substrate)
+# boxplot(Moss_ID_data$z_Rate_separate~Moss_ID_data$Substrate)
+#### MCMCglmm Immediate loss separate ~ substrate  ####
+
+#Moss_ID_data$z_Rate_separate <- scale(Moss_ID_data$Immediate_diff_separated)
+
+#Inverse tree using OU
+inv.mossphylo<-inverseA(moss_tree_OU,nodes="TIPS",scale=TRUE)
+
+i_p2 = list(B=list(mu=rep(0,4), V=diag(4)*1e+8), G=list(G1=list(V=1,nu=0.002)),
+          R=list(V=1,nu=0.002))
+
+i_m2a<-MCMCglmm(Immediate_diff_separated ~ Substrate, random = ~Genus,
+              ginverse=list(Genus=inv.mossphylo$Ainv),
+              family ="gaussian", data = Moss_ID_data,
+              prior=i_p2, nitt=110000, burnin=10000, thin=100,verbose=F)
+i_m2b<-MCMCglmm(Immediate_diff_separated ~ Substrate, random = ~Genus,
+              ginverse=list(Genus=inv.mossphylo$Ainv),
+              family ="gaussian", data = Moss_ID_data,
+              prior=i_p2, nitt=110000, burnin=10000, thin=100,verbose=F)
+i_m2c<-MCMCglmm(Immediate_diff_separated ~ Substrate, random = ~Genus,
+              ginverse=list(Genus=inv.mossphylo$Ainv),
+              family ="gaussian", data = Moss_ID_data,
+              prior=i_p2, nitt=110000, burnin=10000, thin=100,verbose=F)
+
+#Plot the fixed effects
+plot(mcmc.list(i_m2a$Sol,i_m2b$Sol,i_m2c$Sol))
+#And random effects
+plot(mcmc.list(i_m2a$Sol,i_m2b$Sol,i_m2c$Sol))
+
+gelman.diag(mcmc.list(i_m2a$Sol,i_m2b$Sol,i_m2c$Sol))
+
+summary(i_m2a)
+
+
+#### MCMCglmm Immediate loss complete ~ Environment ####
+
+#Moss_ID_data$z_Rate_complete <- scale(Moss_ID_data$Rate_complete)
+
+#Inverse tree using OU
+inv.mossphylo<-inverseA(moss_tree_OU,nodes="TIPS",scale=TRUE)
+
+i_p3 = list(B=list(mu=rep(0,2), V=diag(2)*1e+8), G=list(G1=list(V=1,nu=0.002)),
+          R=list(V=1,nu=0.002))
+
+i_m3a<-MCMCglmm(Immediate_diff_complete ~ Environment, random = ~Genus,
+              ginverse=list(Genus=inv.mossphylo$Ainv),
+              family ="gaussian", data = Moss_ID_data,
+              prior=i_p3, nitt=110000, burnin=10000, thin=100,verbose=F)
+i_m3b<-MCMCglmm(Immediate_diff_complete ~ Environment, random = ~Genus,
+              ginverse=list(Genus=inv.mossphylo$Ainv),
+              family ="gaussian", data = Moss_ID_data,
+              prior=i_p3, nitt=110000, burnin=10000, thin=100,verbose=F)
+i_m3c<-MCMCglmm(Immediate_diff_complete ~ Environment, random = ~Genus,
+              ginverse=list(Genus=inv.mossphylo$Ainv),
+              family ="gaussian", data = Moss_ID_data,
+              prior=i_p3, nitt=110000, burnin=10000, thin=100,verbose=F)
+
+#Plot the fixed effects
+plot(mcmc.list(i_m3a$Sol,i_m3b$Sol,i_m3c$Sol))
+#And random effects
+plot(mcmc.list(i_m3a$Sol,i_m3b$Sol,i_m3c$Sol))
+
+gelman.diag(mcmc.list(i_m3a$Sol,i_m3b$Sol,i_m3c$Sol))
+
+summary(i_m3a)
+
+#### MCMCglmm Immediate loss separate ~ Environment  ####
+
+#Moss_ID_data$z_Rate_separate <- scale(Moss_ID_data$Rate_separate)
+
+#Inverse tree using OU
+inv.mossphylo<-inverseA(moss_tree_OU,nodes="TIPS",scale=TRUE)
+
+i_p4 = list(B=list(mu=rep(0,2), V=diag(2)*1e+8), G=list(G1=list(V=1,nu=0.002)),
+          R=list(V=1,nu=0.002))
+
+i_m4a<-MCMCglmm(Immediate_diff_separated ~ Environment, random = ~Genus,
+              ginverse=list(Genus=inv.mossphylo$Ainv),
+              family ="gaussian", data = Moss_ID_data,
+              prior=i_p4, nitt=110000, burnin=10000, thin=100,verbose=F)
+i_m4b<-MCMCglmm(Immediate_diff_separated ~ Environment, random = ~Genus,
+              ginverse=list(Genus=inv.mossphylo$Ainv),
+              family ="gaussian", data = Moss_ID_data,
+              prior=i_p4, nitt=110000, burnin=10000, thin=100,verbose=F)
+i_m4c<-MCMCglmm(Immediate_diff_separated ~ Environment, random = ~Genus,
+              ginverse=list(Genus=inv.mossphylo$Ainv),
+              family ="gaussian", data = Moss_ID_data,
+              prior=i_p4, nitt=110000, burnin=10000, thin=100,verbose=F)
+
+#Plot the fixed effects
+plot(mcmc.list(i_m4a$Sol,i_m4b$Sol,i_m4c$Sol))
+#And random effects
+plot(mcmc.list(i_m4a$Sol,i_m4b$Sol,i_m4c$Sol))
+
+gelman.diag(mcmc.list(i_m4a$Sol,i_m4b$Sol,i_m4c$Sol))
+
+summary(i_m4a)
+
+
+
+
+
+################################################################################
 #### MCMCglmm Ancestral reconstruction rate_complete ####
 #Inverse tree using OU
 inv.mossphylo_all<-inverseA(moss_tree_OU,nodes="ALL",scale=TRUE)
@@ -423,6 +571,8 @@ m5c<-MCMCglmm(mean_Rate_complete ~ 1, random = ~Genus,
 #This are the logit not transformed back of the values for each family 
 #and each node
 posterior.mode(m5a$Sol)
+posterior.mode(m5b$Sol)
+posterior.mode(m5c$Sol)
 
 #Plot the fixed effects
 plot(mcmc.list(m5a$Sol,m5b$Sol,m5c$Sol))
@@ -546,51 +696,53 @@ HPDinterval(m6aPhyloSig)
 
 plot(m6aPhyloSig)
 
+################################################################################
+
 #### PGLS Ancestral reconstruction substrate ####
-inv.mossphylo_all<-inverseA(Moss_tree,nodes="ALL",scale=TRUE)
-# set priors
-p7 = list(B=list(mu=rep(0,1), V=diag(1)*1e+8), G=list(G1=list(V=1,nu=0.002)),
-          R=list(V=1,nu=0.002))
-
-#model
-m7<-MCMCglmm(Substrate ~ 1, random = ~Genus,
-             ginverse=list(Genus=inv.mossphylo_all$Ainv),
-             family ="categorical", data = Moss_ID_data, pr=TRUE, 
-             rcov = ~us(trait):units,
-             prior=p7, nitt=110000, burnin=10000, thin=100,verbose=F)
-
-#This are the logit not transformed back of the values for each family 
-#and each node
-posterior.mode(m7$Sol)
-
-#BLUPS
-#To get estimates of ancestral states add intercept to node BLUPs
-blupsm7<-data.frame(effect=colnames(m7$Sol), estimate=posterior.mode(
-  m7$Sol[,'(Intercept)'])+posterior.mode(m7$Sol),CI=HPDinterval(
-    m7$Sol[,'(Intercept)']+m7$Sol))
-
-#We added the intercept value to all values and so "Node1" value is incorrect 
-#- lets replace it
-blupsm7['(Intercept)','estimate']<-posterior.mode(m7$Sol[,'(Intercept)'])
-blupsm7['(Intercept)',c('CI.lower','CI.upper')]<-HPDinterval(
-  m7$Sol[,'(Intercept)'])
-
-#The intercept is the value of the root ("Node1") so lets rename it
-blupsm7$effect<-as.character(blupsm7$effect)
-blupsm7['(Intercept)','effect']<-"Node1"
-
-#and remove the text "treetip." from the effect
-blupsm7$effect<-gsub("Genus.","",blupsm7$effect)
-
-#match with phylogeny
-#match the vitamin data and the insect tree data
-Rate_complete_phylo<-(Moss_ID_data$Rate_separate)[match(
-  Moss_tree$tip.label,Moss_ID_data$Genus)]
-
-#plot them and add the node numbers to being able to do 4.10
-plot(Moss_tree, cex=0.8, no.margin =T, label.offset = 0.7)
-nodelabels(pch=21, cex=(abs(blupsm7$estimate[1:Moss_tree$Nnode])*200))
-tiplabels(pch=21,cex=Rate_complete_phylo*200,bg="black")
+# inv.mossphylo_all<-inverseA(Moss_tree,nodes="ALL",scale=TRUE)
+# # set priors
+# p7 = list(B=list(mu=rep(0,1), V=diag(1)*1e+8), G=list(G1=list(V=1,nu=0.002)),
+#           R=list(V=1,nu=0.002))
+# 
+# #model
+# m7<-MCMCglmm(Substrate ~ 1, random = ~Genus,
+#              ginverse=list(Genus=inv.mossphylo_all$Ainv),
+#              family ="categorical", data = Moss_ID_data, pr=TRUE, 
+#              rcov = ~us(trait):units,
+#              prior=p7, nitt=110000, burnin=10000, thin=100,verbose=F)
+# 
+# #This are the logit not transformed back of the values for each family 
+# #and each node
+# posterior.mode(m7$Sol)
+# 
+# #BLUPS
+# #To get estimates of ancestral states add intercept to node BLUPs
+# blupsm7<-data.frame(effect=colnames(m7$Sol), estimate=posterior.mode(
+#   m7$Sol[,'(Intercept)'])+posterior.mode(m7$Sol),CI=HPDinterval(
+#     m7$Sol[,'(Intercept)']+m7$Sol))
+# 
+# #We added the intercept value to all values and so "Node1" value is incorrect 
+# #- lets replace it
+# blupsm7['(Intercept)','estimate']<-posterior.mode(m7$Sol[,'(Intercept)'])
+# blupsm7['(Intercept)',c('CI.lower','CI.upper')]<-HPDinterval(
+#   m7$Sol[,'(Intercept)'])
+# 
+# #The intercept is the value of the root ("Node1") so lets rename it
+# blupsm7$effect<-as.character(blupsm7$effect)
+# blupsm7['(Intercept)','effect']<-"Node1"
+# 
+# #and remove the text "treetip." from the effect
+# blupsm7$effect<-gsub("Genus.","",blupsm7$effect)
+# 
+# #match with phylogeny
+# #match the vitamin data and the insect tree data
+# Rate_complete_phylo<-(Moss_ID_data$Rate_separate)[match(
+#   Moss_tree$tip.label,Moss_ID_data$Genus)]
+# 
+# #plot them and add the node numbers to being able to do 4.10
+# plot(Moss_tree, cex=0.8, no.margin =T, label.offset = 0.7)
+# nodelabels(pch=21, cex=(abs(blupsm7$estimate[1:Moss_tree$Nnode])*200))
+# tiplabels(pch=21,cex=Rate_complete_phylo*200,bg="black")
 
 #### Calculate modes of evolution Genus ####
 
