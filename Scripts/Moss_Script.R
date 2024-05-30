@@ -14,7 +14,8 @@
 
 ##### Data manipulation #####
 pacman::p_load(openxlsx,tidyverse,RColorBrewer,ape,MCMCglmm,picante,geiger,
-               phytools,ggtree, treeio,ggimage, broom, ggally)
+               phytools,ggtree, treeio,ggimage, broom, ggally, wesanderson,
+               paletteer, coda)
 
 
 #### Uploading data ####
@@ -287,15 +288,15 @@ inv.mossphylo<-inverseA(moss_tree_OU,nodes="TIPS",scale=TRUE)
 p1 = list(B=list(mu=rep(0,4), V=diag(4)*1e+8), G=list(G1=list(V=1,nu=0.002)),
           R=list(V=1,nu=0.002))
 
-m1a<-MCMCglmm(z_Rate_complete ~ Substrate, random = ~Genus,
+m1a<-MCMCglmm(z_Rate_complete ~ Substrate-1, random = ~Genus,
              ginverse=list(Genus=inv.mossphylo$Ainv),
              family ="gaussian", data = Moss_ID_data,
              prior=p1, nitt=110000, burnin=10000, thin=100,verbose=F)
-m1b<-MCMCglmm(z_Rate_complete ~ Substrate, random = ~Genus,
+m1b<-MCMCglmm(z_Rate_complete ~ Substrate-1, random = ~Genus,
               ginverse=list(Genus=inv.mossphylo$Ainv),
               family ="gaussian", data = Moss_ID_data,
               prior=p1, nitt=110000, burnin=10000, thin=100,verbose=F)
-m1c<-MCMCglmm(z_Rate_complete ~ Substrate, random = ~Genus,
+m1c<-MCMCglmm(z_Rate_complete ~ Substrate-1, random = ~Genus,
               ginverse=list(Genus=inv.mossphylo$Ainv),
               family ="gaussian", data = Moss_ID_data,
               prior=p1, nitt=110000, burnin=10000, thin=100,verbose=F)
@@ -321,15 +322,15 @@ inv.mossphylo<-inverseA(moss_tree_OU,nodes="TIPS",scale=TRUE)
 p2 = list(B=list(mu=rep(0,4), V=diag(4)*1e+8), G=list(G1=list(V=1,nu=0.002)),
           R=list(V=1,nu=0.002))
 
-m2a<-MCMCglmm(z_Rate_separate ~ Substrate, random = ~Genus,
+m2a<-MCMCglmm(z_Rate_separate ~ Substrate-1, random = ~Genus,
               ginverse=list(Genus=inv.mossphylo$Ainv),
               family ="gaussian", data = Moss_ID_data,
               prior=p2, nitt=110000, burnin=10000, thin=100,verbose=F)
-m2b<-MCMCglmm(z_Rate_separate ~ Substrate, random = ~Genus,
+m2b<-MCMCglmm(z_Rate_separate ~ Substrate-1, random = ~Genus,
               ginverse=list(Genus=inv.mossphylo$Ainv),
               family ="gaussian", data = Moss_ID_data,
               prior=p2, nitt=110000, burnin=10000, thin=100,verbose=F)
-m2c<-MCMCglmm(z_Rate_separate ~ Substrate, random = ~Genus,
+m2c<-MCMCglmm(z_Rate_separate ~ Substrate-1, random = ~Genus,
               ginverse=list(Genus=inv.mossphylo$Ainv),
               family ="gaussian", data = Moss_ID_data,
               prior=p2, nitt=110000, burnin=10000, thin=100,verbose=F)
@@ -354,15 +355,15 @@ inv.mossphylo<-inverseA(moss_tree_OU,nodes="TIPS",scale=TRUE)
 p3 = list(B=list(mu=rep(0,2), V=diag(2)*1e+8), G=list(G1=list(V=1,nu=0.002)),
           R=list(V=1,nu=0.002))
 
-m3a<-MCMCglmm(z_Rate_complete ~ Environment, random = ~Genus,
+m3a<-MCMCglmm(z_Rate_complete ~ Environment-1, random = ~Genus,
               ginverse=list(Genus=inv.mossphylo$Ainv),
               family ="gaussian", data = Moss_ID_data,
               prior=p3, nitt=110000, burnin=10000, thin=100,verbose=F)
-m3b<-MCMCglmm(z_Rate_complete ~ Environment, random = ~Genus,
+m3b<-MCMCglmm(z_Rate_complete ~ Environment-1, random = ~Genus,
               ginverse=list(Genus=inv.mossphylo$Ainv),
               family ="gaussian", data = Moss_ID_data,
               prior=p3, nitt=110000, burnin=10000, thin=100,verbose=F)
-m3c<-MCMCglmm(z_Rate_complete ~ Environment, random = ~Genus,
+m3c<-MCMCglmm(z_Rate_complete ~ Environment-1, random = ~Genus,
               ginverse=list(Genus=inv.mossphylo$Ainv),
               family ="gaussian", data = Moss_ID_data,
               prior=p3, nitt=110000, burnin=10000, thin=100,verbose=F)
@@ -386,15 +387,15 @@ inv.mossphylo<-inverseA(moss_tree_OU,nodes="TIPS",scale=TRUE)
 p4 = list(B=list(mu=rep(0,2), V=diag(2)*1e+8), G=list(G1=list(V=1,nu=0.002)),
           R=list(V=1,nu=0.002))
 
-m4a<-MCMCglmm(z_Rate_separate ~ Environment, random = ~Genus,
+m4a<-MCMCglmm(z_Rate_separate ~ Environment-1, random = ~Genus,
               ginverse=list(Genus=inv.mossphylo$Ainv),
               family ="gaussian", data = Moss_ID_data,
               prior=p4, nitt=110000, burnin=10000, thin=100,verbose=F)
-m4b<-MCMCglmm(z_Rate_separate ~ Environment, random = ~Genus,
+m4b<-MCMCglmm(z_Rate_separate ~ Environment-1, random = ~Genus,
               ginverse=list(Genus=inv.mossphylo$Ainv),
               family ="gaussian", data = Moss_ID_data,
               prior=p4, nitt=110000, burnin=10000, thin=100,verbose=F)
-m4c<-MCMCglmm(z_Rate_separate ~ Environment, random = ~Genus,
+m4c<-MCMCglmm(z_Rate_separate ~ Environment-1, random = ~Genus,
               ginverse=list(Genus=inv.mossphylo$Ainv),
               family ="gaussian", data = Moss_ID_data,
               prior=p4, nitt=110000, burnin=10000, thin=100,verbose=F)
@@ -421,15 +422,15 @@ inv.mossphylo<-inverseA(moss_tree_OU,nodes="TIPS",scale=TRUE)
 i_p1 = list(B=list(mu=rep(0,4), V=diag(4)*1e+8), G=list(G1=list(V=1,nu=0.002)),
           R=list(V=1,nu=0.002))
 
-i_m1a<-MCMCglmm(Immediate_diff_complete ~ Substrate, random = ~Genus,
+i_m1a<-MCMCglmm(Immediate_diff_complete ~ Substrate-1, random = ~Genus,
               ginverse=list(Genus=inv.mossphylo$Ainv),
               family ="gaussian", data = Moss_ID_data,
               prior=i_p1, nitt=110000, burnin=10000, thin=100,verbose=F)
-i_m1b<-MCMCglmm(Immediate_diff_complete ~ Substrate, random = ~Genus,
+i_m1b<-MCMCglmm(Immediate_diff_complete ~ Substrate-1, random = ~Genus,
               ginverse=list(Genus=inv.mossphylo$Ainv),
               family ="gaussian", data = Moss_ID_data,
               prior=i_p1, nitt=110000, burnin=10000, thin=100,verbose=F)
-i_m1c<-MCMCglmm(Immediate_diff_complete ~ Substrate, random = ~Genus,
+i_m1c<-MCMCglmm(Immediate_diff_complete ~ Substrate-1, random = ~Genus,
               ginverse=list(Genus=inv.mossphylo$Ainv),
               family ="gaussian", data = Moss_ID_data,
               prior=i_p1, nitt=110000, burnin=10000, thin=100,verbose=F)
@@ -455,15 +456,15 @@ inv.mossphylo<-inverseA(moss_tree_OU,nodes="TIPS",scale=TRUE)
 i_p2 = list(B=list(mu=rep(0,4), V=diag(4)*1e+8), G=list(G1=list(V=1,nu=0.002)),
           R=list(V=1,nu=0.002))
 
-i_m2a<-MCMCglmm(Immediate_diff_separated ~ Substrate, random = ~Genus,
+i_m2a<-MCMCglmm(Immediate_diff_separated ~ Substrate-1, random = ~Genus,
               ginverse=list(Genus=inv.mossphylo$Ainv),
               family ="gaussian", data = Moss_ID_data,
               prior=i_p2, nitt=110000, burnin=10000, thin=100,verbose=F)
-i_m2b<-MCMCglmm(Immediate_diff_separated ~ Substrate, random = ~Genus,
+i_m2b<-MCMCglmm(Immediate_diff_separated ~ Substrate-1, random = ~Genus,
               ginverse=list(Genus=inv.mossphylo$Ainv),
               family ="gaussian", data = Moss_ID_data,
               prior=i_p2, nitt=110000, burnin=10000, thin=100,verbose=F)
-i_m2c<-MCMCglmm(Immediate_diff_separated ~ Substrate, random = ~Genus,
+i_m2c<-MCMCglmm(Immediate_diff_separated ~ Substrate-1, random = ~Genus,
               ginverse=list(Genus=inv.mossphylo$Ainv),
               family ="gaussian", data = Moss_ID_data,
               prior=i_p2, nitt=110000, burnin=10000, thin=100,verbose=F)
@@ -488,15 +489,15 @@ inv.mossphylo<-inverseA(moss_tree_OU,nodes="TIPS",scale=TRUE)
 i_p3 = list(B=list(mu=rep(0,2), V=diag(2)*1e+8), G=list(G1=list(V=1,nu=0.002)),
           R=list(V=1,nu=0.002))
 
-i_m3a<-MCMCglmm(Immediate_diff_complete ~ Environment, random = ~Genus,
+i_m3a<-MCMCglmm(Immediate_diff_complete ~ Environment-1, random = ~Genus,
               ginverse=list(Genus=inv.mossphylo$Ainv),
               family ="gaussian", data = Moss_ID_data,
               prior=i_p3, nitt=110000, burnin=10000, thin=100,verbose=F)
-i_m3b<-MCMCglmm(Immediate_diff_complete ~ Environment, random = ~Genus,
+i_m3b<-MCMCglmm(Immediate_diff_complete ~ Environment-1, random = ~Genus,
               ginverse=list(Genus=inv.mossphylo$Ainv),
               family ="gaussian", data = Moss_ID_data,
               prior=i_p3, nitt=110000, burnin=10000, thin=100,verbose=F)
-i_m3c<-MCMCglmm(Immediate_diff_complete ~ Environment, random = ~Genus,
+i_m3c<-MCMCglmm(Immediate_diff_complete ~ Environment-1, random = ~Genus,
               ginverse=list(Genus=inv.mossphylo$Ainv),
               family ="gaussian", data = Moss_ID_data,
               prior=i_p3, nitt=110000, burnin=10000, thin=100,verbose=F)
@@ -520,15 +521,15 @@ inv.mossphylo<-inverseA(moss_tree_OU,nodes="TIPS",scale=TRUE)
 i_p4 = list(B=list(mu=rep(0,2), V=diag(2)*1e+8), G=list(G1=list(V=1,nu=0.002)),
           R=list(V=1,nu=0.002))
 
-i_m4a<-MCMCglmm(Immediate_diff_separated ~ Environment, random = ~Genus,
+i_m4a<-MCMCglmm(Immediate_diff_separated ~ Environment-1, random = ~Genus,
               ginverse=list(Genus=inv.mossphylo$Ainv),
               family ="gaussian", data = Moss_ID_data,
               prior=i_p4, nitt=110000, burnin=10000, thin=100,verbose=F)
-i_m4b<-MCMCglmm(Immediate_diff_separated ~ Environment, random = ~Genus,
+i_m4b<-MCMCglmm(Immediate_diff_separated ~ Environment-1, random = ~Genus,
               ginverse=list(Genus=inv.mossphylo$Ainv),
               family ="gaussian", data = Moss_ID_data,
               prior=i_p4, nitt=110000, burnin=10000, thin=100,verbose=F)
-i_m4c<-MCMCglmm(Immediate_diff_separated ~ Environment, random = ~Genus,
+i_m4c<-MCMCglmm(Immediate_diff_separated ~ Environment-1, random = ~Genus,
               ginverse=list(Genus=inv.mossphylo$Ainv),
               family ="gaussian", data = Moss_ID_data,
               prior=i_p4, nitt=110000, burnin=10000, thin=100,verbose=F)
@@ -546,6 +547,47 @@ summary(i_m4a)
 
 
 
+################################################################################
+#### Pairwise comparison immediate loss per Substrate & Environment ####
+# Function to compute posterior modes and HPD intervals for specified comparisons
+pairwise_comparison <- function(model, comparisons) {
+  results <- data.frame(Comparison = character(),
+                        PosteriorMode = numeric(),
+                        LowerBoundary = numeric(),
+                        UpperBoundary = numeric(),
+                        stringsAsFactors = FALSE)
+  
+  for (comparison in comparisons) {
+    var1 <- comparison[1]
+    var2 <- comparison[2]
+    diff <- model$Sol[, var1] - model$Sol[, var2]
+    mode <- posterior.mode(diff)
+    hpd <- HPDinterval(diff)
+    
+    results <- rbind(results, data.frame(Comparison = paste0(colnames(model$Sol)[var1], " vs ", colnames(model$Sol)[var2]),
+                                         PosteriorMode = mode,
+                                         LowerBoundary = hpd[1],
+                                         UpperBoundary = hpd[2]))
+  }
+  
+  return(results)
+}
+comparisons_substrate <- list(c(1, 2),  # Rock vs Sand
+                    c(2, 3),  # Sand vs Soil
+                    c(3, 4),  # Soil vs Wood
+                    c(1, 3),  # Rock vs Soil
+                    c(1, 4),  # Rock vs Wood
+                    c(2, 4))  # Sand vs Wood
+
+pairwise_table_m1a <- pairwise_comparison(m1a, comparisons_substrate)
+pairwise_table_m2a <- pairwise_comparison(m2a, comparisons_substrate)
+pairwise_table_m3a <- pairwise_comparison(m3a, comparisons = list(c(1,2)))
+pairwise_table_m4a <- pairwise_comparison(m4a, comparisons = list(c(1,2)))
+
+pairwise_table_i_m1a <- pairwise_comparison(i_m1a, comparisons_substrate)
+pairwise_table_i_m2a <- pairwise_comparison(i_m2a, comparisons_substrate)
+pairwise_table_i_m3a <- pairwise_comparison(i_m3a, comparisons = list(c(1,2)))
+pairwise_table_i_m4a <- pairwise_comparison(i_m4a, comparisons = list(c(1,2)))
 ################################################################################
 #### MCMCglmm Ancestral reconstruction rate_complete ####
 #Inverse tree using OU
@@ -697,6 +739,41 @@ HPDinterval(m6aPhyloSig)
 plot(m6aPhyloSig)
 
 ################################################################################
+#### Graphics ####
+wes_palette <- paletteer_d("tvthemes::Day")
+selected_palette <- paletteer_d("tvthemes::gravityFalls")
+pale_wes_palette <- scales::alpha(wes_palette, 0.5)
+
+
+ggplot(data = Moss_ID_data) +
+  geom_violin(aes(x = Substrate, y = Immediate_diff_separated, fill = Substrate), 
+              trim = FALSE) +
+  stat_summary(fun = mean, geom = "point", aes(
+    x = Substrate, y = Immediate_diff_separated, group = Genus, col = Genus)) +
+  stat_summary(fun = mean, geom = "line", aes(
+    x = Substrate, y = Immediate_diff_separated, group = Genus, col = Genus)) +
+  scale_fill_manual(values = pale_wes_palette) +
+  scale_color_manual(values = selected_palette) +
+  labs(title = "Violin Plot of Immediate Loss Separted by Substrate",
+       x = "Substrate",
+       y = "Immediate Loss Complete") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+ggplot(data = Moss_ID_data) +
+  geom_violin(aes(x = Substrate, y = Immediate_diff_complete, fill = Substrate), 
+              trim = FALSE) +
+  stat_summary(fun = mean, geom = "point", aes(
+    x = Substrate, y = Immediate_diff_complete, group = Genus, col = Genus)) +
+  stat_summary(fun = mean, geom = "line", aes(
+    x = Substrate, y = Immediate_diff_complete, group = Genus, col = Genus)) +
+  scale_fill_manual(values = pale_wes_palette) +
+  scale_color_manual(values = selected_palette) +
+  labs(title = "Violin Plot of Immediate Loss Separted by Substrate",
+       x = "Substrate",
+       y = "Immediate Loss Complete") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
 
 #### PGLS Ancestral reconstruction substrate ####
 # inv.mossphylo_all<-inverseA(Moss_tree,nodes="ALL",scale=TRUE)
@@ -779,3 +856,37 @@ plot(m6aPhyloSig)
 # 
 # #OU is better than both EB and BM. The values are restrained to ne value in the model
 # #Use alpha when doing the phylogenetic approaches: 1387.735201
+#### graph ####
+# ggplot(data = Moss_ID_data) +
+#   geom_boxplot(aes(x = Substrate, y = Immediate_diff_complete, fill = Substrate)) +
+#   stat_summary(fun.y="mean", geom = "point", aes(x =Substrate, y = Immediate_diff_complete, group = Genus, col=Genus)) +
+#   stat_summary(fun.y="mean", geom = "line", aes(x =Substrate, y = Immediate_diff_complete, group = Genus, col=Genus))
+
+#### More unused code ####
+# #posterior.mode(i_m1a$Sol[,"Substraterock"]-i_m1a$Sol[,"Substratesand"])
+# #HPDinterval(i_m1a$Sol[,"Substraterock"]-i_m1a$Sol[,"Substratesand"])
+# colnames(i_m1a$Sol)
+#
+# #Rock vs sand If the HPD interval is not
+# posterior.mode(i_m1a$Sol[,1]-i_m1a$Sol[,2])
+# HPDinterval(i_m1a$Sol[,1]-i_m1a$Sol[,2])
+# 
+# #Sand vs soil If the HPD interval is not
+# posterior.mode(i_m1a$Sol[,2]-i_m1a$Sol[,3])
+# HPDinterval(i_m1a$Sol[,2]-i_m1a$Sol[,3])
+# 
+# #Soil vs wood If the HPD interval is not
+# posterior.mode(i_m1a$Sol[,3]-i_m1a$Sol[,4])
+# HPDinterval(i_m1a$Sol[,3]-i_m1a$Sol[,4])
+# 
+# #Rock vs soil If the HPD interval is not
+# posterior.mode(i_m1a$Sol[,1]-i_m1a$Sol[,3])
+# HPDinterval(i_m1a$Sol[,1]-i_m1a$Sol[,3])
+# 
+# #Rock vs wood If the HPD interval is not
+# posterior.mode(i_m1a$Sol[,1]-i_m1a$Sol[,4])
+# HPDinterval(i_m1a$Sol[,1]-i_m1a$Sol[,4])
+# 
+# #Sand vs wood If the HPD interval is not
+# posterior.mode(i_m1a$Sol[,2]-i_m1a$Sol[,4])
+# HPDinterval(i_m1a$Sol[,2]-i_m1a$Sol[,4])
