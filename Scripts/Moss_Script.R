@@ -68,8 +68,8 @@ Moss_rates_ID <- merge(Moss_rates_complete_ID, Moss_rates_separate_ID,
                        by=c("Genus", "ID"))
 colnames(Moss_rates_ID) <- c("Genus", "ID", "Rate_complete", "Rate_separate")
 
-Moss_rates_ID$Rate_complete<- abs(Moss_rates_ID$Rate_complete)
-Moss_rates_ID$Rate_separate<- abs(Moss_rates_ID$Rate_separate)
+Moss_rates_ID$Rate_complete<- abs((Moss_rates_ID$Rate_complete)*1440)
+Moss_rates_ID$Rate_separate<- abs((Moss_rates_ID$Rate_separate)*1440)
 
 #### Calculating rates _Genus ####
 #We use the rates from min 30 to min 120 because 0-30min is water dropping
@@ -135,56 +135,133 @@ Moss_diff_s_ID <- select(Moss_diff_s_ID, -c("0","30.x","30.y","660"))
 
 #### Calculate the differences between initial and end wetness _Genus ####
 
-Moss_diff_c_Genus <- Moss_diff_c_ID %>% 
-  group_by(Genus) %>% 
-  summarise(mean_imm_diff=mean(Immediate_diff_complete),
-            mean_final_diff=mean(Final_diff_complete))
-
-Moss_diff_s_Genus <- Moss_diff_s_ID %>% 
-  group_by(Genus) %>% 
-  summarise(mean_imm_diff=mean(Immediate_diff_separated),
-            mean_final_diff=mean(Final_diff_separated))
+# Moss_diff_c_Genus <- Moss_diff_c_ID %>% 
+#   group_by(Genus) %>% 
+#   summarise(mean_imm_diff=mean(Immediate_diff_complete),
+#             mean_final_diff=mean(Final_diff_complete))
+# 
+# Moss_diff_s_Genus <- Moss_diff_s_ID %>% 
+#   group_by(Genus) %>% 
+#   summarise(mean_imm_diff=mean(Immediate_diff_separated),
+#             mean_final_diff=mean(Final_diff_separated))
 
 #### Make the complete dataframe for all values ####
 
 Moss_ID_data <- reduce(list(Moss_data, Moss_rates_ID, Moss_diff_c_ID, Moss_diff_s_ID), 
                        left_join, by = c("ID", "Genus"))
 
-#### Calculate modes of evolution Genus ####
+#### Data with means per Genus ####
 
-MossRC_label<-as.numeric(Moss_rates_Genus$Rate_complete[match(
-  Moss_tree$tip.label,Moss_rates_Genus$Genus)])
+Moss_Genus_data <- Moss_ID_data %>% 
+  group_by(Genus) %>% 
+  summarise(mean_Rate_complete=mean(Rate_complete),
+            mean_Rate_separate=mean(Rate_separate),
+            mean_Immediate_diff_complete=mean(Immediate_diff_complete),
+            mean_Final_diff_complete=mean(Final_diff_complete),
+            mean_Immediate_diff_separated=mean(Immediate_diff_separated),
+            mean_Final_diff_separated=mean(Final_diff_separated))
+
+Moss_Genus_data <- as.data.frame(Moss_Genus_data)
+
+
+#### Calculate modes of evolution Genus ####
+ 
+#Match tips with rate complete
+MossRC_label<-as.numeric(Moss_Genus_data$mean_Rate_complete[match(
+ Moss_tree$tip.label,Moss_Genus_data$Genus)])
 names(MossRC_label)<-Moss_tree$tip.label
-MossSC_label<-as.numeric(Moss_rates_Genus$Rate_separate[match(
-  Moss_tree$tip.label,Moss_rates_Genus$Genus)])
+
+#Match tips with rate separate
+MossSC_label<-as.numeric(Moss_Genus_data$mean_Rate_separate[match(
+  Moss_tree$tip.label,Moss_Genus_data$Genus)])
 names(MossSC_label)<-Moss_tree$tip.label
 
-BM_C<-fitContinuous(phy= Moss_tree, dat = MossRC_label, model = "BM")
-OU_C<-fitContinuous(phy= Moss_tree, dat = MossRC_label, model = "OU", 
-                    bounds=list(alpha=c(0,10000)))
-EB_C<-fitContinuous(phy= Moss_tree, dat = MossRC_label, model = "EB")
+#Match tips with immediate loss complete
+MossImC_label<-as.numeric(Moss_Genus_data$mean_Immediate_diff_complete[match(
+  Moss_tree$tip.label,Moss_Genus_data$Genus)])
+names(MossImC_label)<-Moss_tree$tip.label
 
-BM_C$opt$aic
-OU_C$opt$aic
-EB_C$opt$aic
+#Match tips with immediate loss separate
+MossImS_label<-as.numeric(Moss_Genus_data$mean_Immediate_diff_separated[match(
+  Moss_tree$tip.label,Moss_Genus_data$Genus)])
+names(MossImS_label)<-Moss_tree$tip.label
 
-##BM versus OU
-BMvsOU_C <- -2*(BM_C$opt$lnL - OU_C$opt$lnL)
-BMvsOU_C
-pchisq(BMvsOU_C, df=1,lower.tail = FALSE)
+#### Compare modes of evolution for rates and immediate loss ####
+#Rates of evolution function
+modes_evol <- function(x) {  
+  # Fit the models
+  BM <- fitContinuous(phy = Moss_tree, dat = x, 
+                      model = "BM")
+  cat(paste0("Brownian motion (BM) sigma^2 value is: ", BM$opt$sigsq, "\n",
+             ",AIC value is: ", BM$opt$aic, "\n",
+             ",lnL is: ", BM$opt$lnL, "\n"))
+  
+  OU <- fitContinuous(phy = Moss_tree, dat = x, 
+                      model = "OU")
+  cat(paste0("Ornstein-Uhlenbeck (OU) alpha value is: ", OU$opt$alpha, "\n",
+             ",AIC value is: ", OU$opt$aic, "\n",
+             ",lnL is: ", OU$opt$lnL, "\n"))
+  
+  EB <- fitContinuous(phy = Moss_tree, dat = x, 
+                      model = "EB")
+  cat(paste0("Early burst (EB) a value is: ", EB$opt$a, "\n",
+             ",AIC value is: ", EB$opt$aic, "\n",
+             ",and lnL is: ", EB$opt$lnL, "\n"))
+  
+  # Function to compare models and print results
+  compare_models <- function(model1, model2, model1_name, model2_name) {
+    if (model1$opt$aic < model2$opt$aic) {
+      larger_model <- model1_name
+      smaller_model <- model2_name
+      larger_lnL <- model1$opt$lnL
+      smaller_lnL <- model2$opt$lnL
+      larger_aic <- model1$opt$aic
+      smaller_aic <- model2$opt$aic
+    } else {
+      larger_model <- model2_name
+      smaller_model <- model1_name
+      larger_lnL <- model2$opt$lnL
+      smaller_lnL <- model1$opt$lnL
+      larger_aic <- model2$opt$aic
+      smaller_aic <- model1$opt$aic
+    }
+    
+    LRT_stat <- -2 * (smaller_lnL - larger_lnL)
+    p_value <- pchisq(LRT_stat, df = 1, lower.tail = FALSE)
+    
+    cat(paste0("Comparison: ", model1_name, " vs ", model2_name, "\n"))
+    cat(paste0("Likelihood ratio test statistic: ", LRT_stat, "\n"))
+    cat(paste0("p-value: ", p_value, "\n"))
+    cat(paste0("smaller aic: ", smaller_model, 
+               " (", smaller_aic, ") vs. ",larger_model, 
+               " (", larger_aic, ")\n\n"))
+  }
+  
+  # Print the comparisons
+  cat(paste0("\n","...", "\n"))
+  cat(paste0("Comparing models", "\n"))
+  cat(paste0("...", "\n", "\n"))
+  
+  # BM vs OU
+  compare_models(BM, OU, "BM", "OU")
+  
+  # BM vs EB
+  compare_models(BM, EB, "BM", "EB")
+  
+  # OU vs EB
+  compare_models(OU, EB, "OU", "EB")
+}
 
-##BM versus EB
-BMvsEB_C <- -2*(EB_C$opt$lnL - BM_C$opt$lnL)
-BMvsEB_C
-pchisq(BMvsEB_C, df=1,lower.tail = FALSE)
+#Calculate the modes of evolution of all the traits
+rates_complete_evol<- modes_evol(MossRC_label)
+#For rates complete the best model is OU with a value of 2.71828182845905
+rates_separate_evol<- modes_evol(MossSC_label)
+#For rates separate the best model is OU with a value of 2.71828182845905
+immediate_complete_evol<- modes_evol(MossImC_label)
+#For immediate loss complete the best model is OU with a value of 2.71828182845905
+immediate_separate_evol<- modes_evol(MossImS_label)
+#For immediate loss separate the best model is OU with a value of 2.71828182845905
 
-##OU versus EB
-OUvsEB_C <- -2*(EB_C$opt$lnL - OU_C$opt$lnL)
-OUvsEB_C 
-pchisq(OUvsEB_C, df=1,lower.tail = FALSE)
-
-#OU is better than both EB and BM. The values are restrained to ne value in the model
-#Use alpha when doing the phylogenetic approaches: 1387.735201
 
 #### MCMCglmm z - Rate complete ~ substrate ####
 
@@ -308,18 +385,7 @@ plot(mcmc.list(m4a$Sol,m4b$Sol,m4c$Sol))
 gelman.diag(mcmc.list(m4a$Sol,m4b$Sol,m4c$Sol))
 
 summary(m4a)
-#### Data with means per Genus ####
 
-Moss_Genus_data <- Moss_ID_data %>% 
-  group_by(Genus) %>% 
-  summarise(mean_Rate_complete=mean(Rate_complete),
-            mean_Rate_separate=mean(Rate_separate),
-            mean_Immediate_diff_complete=mean(Immediate_diff_complete),
-            mean_Final_diff_complete=mean(Final_diff_complete),
-            mean_Immediate_diff_separated=mean(Immediate_diff_separated),
-            mean_Final_diff_separated=mean(Final_diff_separated))
-
-Moss_Genus_data <- as.data.frame(Moss_Genus_data)
 
 #### MCMCglmm Ancestral reconstruction rate_complete ####
 
@@ -510,3 +576,39 @@ Rate_complete_phylo<-(Moss_ID_data$Rate_separate)[match(
 plot(Moss_tree, cex=0.8, no.margin =T, label.offset = 0.7)
 nodelabels(pch=21, cex=(abs(blupsm7$estimate[1:Moss_tree$Nnode])*200))
 tiplabels(pch=21,cex=Rate_complete_phylo*200,bg="black")
+
+#### Calculate modes of evolution Genus ####
+
+# MossRC_label<-as.numeric(Moss_rates_Genus$Rate_complete[match(
+#   Moss_tree$tip.label,Moss_rates_Genus$Genus)])
+# names(MossRC_label)<-Moss_tree$tip.label
+# MossSC_label<-as.numeric(Moss_rates_Genus$Rate_separate[match(
+#   Moss_tree$tip.label,Moss_rates_Genus$Genus)])
+# names(MossSC_label)<-Moss_tree$tip.label
+# 
+# BM_C<-fitContinuous(phy= Moss_tree, dat = MossRC_label, model = "BM")
+# OU_C<-fitContinuous(phy= Moss_tree, dat = MossRC_label, model = "OU", 
+#                     bounds=list(alpha=c(0,10000)))
+# EB_C<-fitContinuous(phy= Moss_tree, dat = MossRC_label, model = "EB")
+# 
+# BM_C$opt$aic
+# OU_C$opt$aic
+# EB_C$opt$aic
+# 
+# ##BM versus OU
+# BMvsOU_C <- -2*(BM_C$opt$lnL - OU_C$opt$lnL)
+# BMvsOU_C
+# pchisq(BMvsOU_C, df=1,lower.tail = FALSE)
+# 
+# ##BM versus EB
+# BMvsEB_C <- -2*(EB_C$opt$lnL - BM_C$opt$lnL)
+# BMvsEB_C
+# pchisq(BMvsEB_C, df=1,lower.tail = FALSE)
+# 
+# ##OU versus EB
+# OUvsEB_C <- -2*(EB_C$opt$lnL - OU_C$opt$lnL)
+# OUvsEB_C 
+# pchisq(OUvsEB_C, df=1,lower.tail = FALSE)
+# 
+# #OU is better than both EB and BM. The values are restrained to ne value in the model
+# #Use alpha when doing the phylogenetic approaches: 1387.735201
