@@ -299,8 +299,8 @@ gelman.diag(mcmc.list(m1a$Sol,m1b$Sol,m1c$Sol))
 
 summary(m1a)
 
-boxplot(Moss_ID_data$z_Rate_complete~Moss_ID_data$Substrate)
-boxplot(Moss_ID_data$z_Rate_separate~Moss_ID_data$Substrate)
+# boxplot(Moss_ID_data$z_Rate_complete~Moss_ID_data$Substrate)
+# boxplot(Moss_ID_data$z_Rate_separate~Moss_ID_data$Substrate)
 #### MCMCglmm z - Rate separate ~ substrate  ####
 
 Moss_ID_data$z_Rate_separate <- scale(Moss_ID_data$Rate_separate)
@@ -458,9 +458,9 @@ mean_Rate_complete_phylo<-(Moss_Genus_data$mean_Rate_complete)[match(
   moss_tree_OU$tip.label,Moss_Genus_data$Genus)]
 
 #plot them and add the node numbers to being able to do 4.10
-plot(moss_tree_OU, cex=0.8, no.margin =T, label.offset = 0.7)
-nodelabels(pch=21, cex=(abs(blupsm5a$estimate[1:moss_tree_OU$Nnode])*100))
-tiplabels(pch=21,cex=mean_Rate_complete_phylo*100,bg="black")
+plot(moss_tree_OU, cex=0.8, no.margin =T, label.offset = 0.02)
+nodelabels(pch=21, cex=(blupsm5a$estimate[1:moss_tree_OU$Nnode]/2.5))
+tiplabels(pch=21,cex=mean_Rate_complete_phylo/2.5,bg="black")
 
 
 #### check phylogenetic signal heredability rate_complete ####
@@ -532,9 +532,9 @@ mean_Rate_separate_phylo<-(Moss_Genus_data$mean_Rate_separate)[match(
   moss_tree_OU$tip.label,Moss_Genus_data$Genus)]
 
 #plot them and add the node numbers to being able to do 4.10
-plot(moss_tree_OU, cex=0.8, no.margin =T, label.offset = 0.7)
-nodelabels(pch=21, cex=(abs(blupsm6a$estimate[1:moss_tree_OU$Nnode])*100))
-tiplabels(pch=21,cex=mean_Rate_separate_phylo*100,bg="black")
+plot(moss_tree_OU, cex=0.8, no.margin =T, label.offset = 0.02)
+nodelabels(pch=21, cex=(blupsm6a$estimate[1:moss_tree_OU$Nnode]/2.5))
+tiplabels(pch=21,cex=mean_Rate_separate_phylo/2.5,bg="black")
 
 #### check phylogenetic signal heredability rate_separate ####
 
