@@ -263,10 +263,16 @@ immediate_separate_evol<- modes_evol(MossImS_label)
 #For immediate loss separate the best model is OU with a value of 2.71828182845905
 
 
+#### Set the tree to an OU mode of evolution with value 2.71 ####
+
+moss_tree_OU<-rescale(Moss_tree, "OU", alpha=2.71828182845905)
+
 #### MCMCglmm z - Rate complete ~ substrate ####
 
 Moss_ID_data$z_Rate_complete <- scale(Moss_ID_data$Rate_complete)
-inv.mossphylo<-inverseA(Moss_tree,nodes="TIPS",scale=TRUE)
+
+#Inverse tree using OU
+inv.mossphylo<-inverseA(moss_tree_OU,nodes="TIPS",scale=TRUE)
 
 p1 = list(B=list(mu=rep(0,4), V=diag(4)*1e+8), G=list(G1=list(V=1,nu=0.002)),
           R=list(V=1,nu=0.002))
@@ -298,7 +304,9 @@ boxplot(Moss_ID_data$z_Rate_separate~Moss_ID_data$Substrate)
 #### MCMCglmm z - Rate separate ~ substrate  ####
 
 Moss_ID_data$z_Rate_separate <- scale(Moss_ID_data$Rate_separate)
-inv.mossphylo<-inverseA(Moss_tree,nodes="TIPS",scale=TRUE)
+
+#Inverse tree using OU
+inv.mossphylo<-inverseA(moss_tree_OU,nodes="TIPS",scale=TRUE)
 
 p2 = list(B=list(mu=rep(0,4), V=diag(4)*1e+8), G=list(G1=list(V=1,nu=0.002)),
           R=list(V=1,nu=0.002))
@@ -329,7 +337,9 @@ summary(m2a)
 #### MCMCglmm z - Rate complete ~ Environment ####
 
 Moss_ID_data$z_Rate_complete <- scale(Moss_ID_data$Rate_complete)
-inv.mossphylo<-inverseA(Moss_tree,nodes="TIPS",scale=TRUE)
+
+#Inverse tree using OU
+inv.mossphylo<-inverseA(moss_tree_OU,nodes="TIPS",scale=TRUE)
 
 p3 = list(B=list(mu=rep(0,2), V=diag(2)*1e+8), G=list(G1=list(V=1,nu=0.002)),
           R=list(V=1,nu=0.002))
@@ -359,7 +369,9 @@ summary(m3a)
 #### MCMCglmm z - Rate separate ~ Environment  ####
 
 Moss_ID_data$z_Rate_separate <- scale(Moss_ID_data$Rate_separate)
-inv.mossphylo<-inverseA(Moss_tree,nodes="TIPS",scale=TRUE)
+
+#Inverse tree using OU
+inv.mossphylo<-inverseA(moss_tree_OU,nodes="TIPS",scale=TRUE)
 
 p4 = list(B=list(mu=rep(0,2), V=diag(2)*1e+8), G=list(G1=list(V=1,nu=0.002)),
           R=list(V=1,nu=0.002))
@@ -388,8 +400,9 @@ summary(m4a)
 
 
 #### MCMCglmm Ancestral reconstruction rate_complete ####
+#Inverse tree using OU
+inv.mossphylo_all<-inverseA(moss_tree_OU,nodes="ALL",scale=TRUE)
 
-inv.mossphylo_all<-inverseA(Moss_tree,nodes="ALL",scale=TRUE)
 # set priors
 p5 = list(B=list(mu=rep(0,1), V=diag(1)*1e+8), G=list(G1=list(V=1,nu=0.002)),
           R=list(V=1,nu=0.002))
@@ -442,11 +455,11 @@ blupsm5a$effect<-gsub("Genus.","",blupsm5a$effect)
 #match with phylogeny
 #match the vitamin data and the insect tree data
 mean_Rate_complete_phylo<-(Moss_Genus_data$mean_Rate_complete)[match(
-  Moss_tree$tip.label,Moss_Genus_data$Genus)]
+  moss_tree_OU$tip.label,Moss_Genus_data$Genus)]
 
 #plot them and add the node numbers to being able to do 4.10
-plot(Moss_tree, cex=0.8, no.margin =T, label.offset = 0.7)
-nodelabels(pch=21, cex=(abs(blupsm5a$estimate[1:Moss_tree$Nnode])*100))
+plot(moss_tree_OU, cex=0.8, no.margin =T, label.offset = 0.7)
+nodelabels(pch=21, cex=(abs(blupsm5a$estimate[1:moss_tree_OU$Nnode])*100))
 tiplabels(pch=21,cex=mean_Rate_complete_phylo*100,bg="black")
 
 
@@ -461,7 +474,9 @@ HPDinterval(m5aPhyloSig)
 plot(m5aPhyloSig)
 
 #### MCMCglmm Ancestral reconstruction rate_separate ####
-inv.mossphylo_all<-inverseA(Moss_tree,nodes="ALL",scale=TRUE)
+#Inverse tree using OU
+inv.mossphylo_all<-inverseA(moss_tree_OU,nodes="ALL",scale=TRUE)
+
 # set priors
 p6 = list(B=list(mu=rep(0,1), V=diag(1)*1e+8), G=list(G1=list(V=1,nu=0.002)),
           R=list(V=1,nu=0.002))
@@ -514,11 +529,11 @@ blupsm6a$effect<-gsub("Genus.","",blupsm6a$effect)
 #match with phylogeny
 #match the vitamin data and the insect tree data
 mean_Rate_separate_phylo<-(Moss_Genus_data$mean_Rate_separate)[match(
-  Moss_tree$tip.label,Moss_Genus_data$Genus)]
+  moss_tree_OU$tip.label,Moss_Genus_data$Genus)]
 
 #plot them and add the node numbers to being able to do 4.10
-plot(Moss_tree, cex=0.8, no.margin =T, label.offset = 0.7)
-nodelabels(pch=21, cex=(abs(blupsm6a$estimate[1:Moss_tree$Nnode])*100))
+plot(moss_tree_OU, cex=0.8, no.margin =T, label.offset = 0.7)
+nodelabels(pch=21, cex=(abs(blupsm6a$estimate[1:moss_tree_OU$Nnode])*100))
 tiplabels(pch=21,cex=mean_Rate_separate_phylo*100,bg="black")
 
 #### check phylogenetic signal heredability rate_separate ####
@@ -531,7 +546,7 @@ HPDinterval(m6aPhyloSig)
 
 plot(m6aPhyloSig)
 
-#### MCMCglmm Ancestral reconstruction substrate ####
+#### PGLS Ancestral reconstruction substrate ####
 inv.mossphylo_all<-inverseA(Moss_tree,nodes="ALL",scale=TRUE)
 # set priors
 p7 = list(B=list(mu=rep(0,1), V=diag(1)*1e+8), G=list(G1=list(V=1,nu=0.002)),
