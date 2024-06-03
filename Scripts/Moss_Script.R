@@ -14,7 +14,7 @@
 
 ##### Data manipulation #####
 pacman::p_load(openxlsx,tidyverse,RColorBrewer,ape,MCMCglmm,picante,geiger,
-               phytools,ggtree, treeio,ggimage, broom, ggally, wesanderson,
+               phytools,ggtree, treeio,ggimage, broom, GGally, wesanderson,
                paletteer, coda, ggpubr, ggplot2)
 
 
@@ -818,5 +818,5 @@ legend("bottomleft", legend=c(
   col=c("green4", "gold","orangered2","orange2"), cex=1, box.lty=0)
 #dev.off()
 #### Save RData ####
-save.image("MossProject.RData")
+#save.image("MossProject.RData")
 ################################################################################
